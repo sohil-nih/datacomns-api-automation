@@ -4,11 +4,45 @@ Load Memgraph/API validation pair definitions from YAML (per project).
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+
+# memgraph_validation_root/cypher/<file> -> parsed query map (lazy)
+_queries_yaml_cache: Dict[Path, Dict[str, str]] = {}
+
+
+def _load_queries_yaml(queries_yaml_path: Path) -> Dict[str, str]:
+    """Load a YAML file whose top-level string values are Cypher queries."""
+    resolved = queries_yaml_path.resolve()
+    if resolved not in _queries_yaml_cache:
+        if not resolved.is_file():
+            raise FileNotFoundError(f"Cypher queries YAML not found: {resolved}")
+        with open(resolved, encoding="utf-8") as f:
+            raw = yaml.safe_load(f)
+        if not isinstance(raw, dict):
+            raise ValueError(f"{resolved}: root must be a mapping of query_name -> cypher string")
+        out: Dict[str, str] = {}
+        for k, v in raw.items():
+            if k is None or str(k).startswith("#"):
+                continue
+            if v is None:
+                continue
+            key = str(k)
+            if isinstance(v, dict):
+                raise ValueError(f"{resolved}: key {key!r} must be a string (block scalar), not a mapping")
+            out[key] = str(v).strip()
+            if not out[key]:
+                raise ValueError(f"{resolved}: query {key!r} is empty")
+        _queries_yaml_cache[resolved] = out
+    return _queries_yaml_cache[resolved]
+
+
+def clear_queries_yaml_cache() -> None:
+    """Test hook: invalidate cached queries YAML."""
+    _queries_yaml_cache.clear()
 
 
 @dataclass
@@ -55,15 +89,38 @@ def _load_one_yaml(path: Path, memgraph_root: Path) -> ValidationPair:
 
     cypher = raw.get("cypher")
     cypher_file = raw.get("cypher_file")
-    if cypher_file:
+    cypher_query_key = raw.get("cypher_query_key")
+    cypher_queries_yaml = raw.get("cypher_queries_yaml") or "queries.yaml"
+
+    has_inline = bool(cypher and str(cypher).strip())
+    has_file = bool(cypher_file)
+    has_yaml_key = bool(cypher_query_key and str(cypher_query_key).strip())
+    n = sum([has_inline, has_file, has_yaml_key])
+    if n > 1:
+        raise ValueError(
+            f"{path}: use exactly one of inline cypher, cypher_file, or cypher_query_key"
+        )
+    if has_yaml_key:
+        qyaml = memgraph_root / "cypher" / str(cypher_queries_yaml)
+        bundle = _load_queries_yaml(qyaml)
+        key = str(cypher_query_key).strip()
+        if key not in bundle:
+            raise KeyError(
+                f"{path}: cypher_query_key {key!r} not in {qyaml} "
+                f"(keys: {sorted(bundle.keys())})"
+            )
+        cypher = bundle[key]
+    elif has_file:
         cy_path = memgraph_root / "cypher" / str(cypher_file)
         if not cy_path.is_file():
             raise FileNotFoundError(f"{path}: cypher_file not found: {cy_path}")
         cypher = cy_path.read_text(encoding="utf-8").strip()
-    elif not cypher or not str(cypher).strip():
-        raise ValueError(f"{path}: provide cypher or cypher_file")
-    else:
+    elif has_inline:
         cypher = str(cypher).strip()
+    else:
+        raise ValueError(
+            f"{path}: provide cypher, cypher_file, or cypher_query_key (+ queries YAML)"
+        )
 
     params = dict(raw.get("cypher_parameters") or {})
 

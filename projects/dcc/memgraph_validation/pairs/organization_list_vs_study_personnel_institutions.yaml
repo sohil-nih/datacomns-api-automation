@@ -9,7 +9,7 @@ tags:
   - smoke
   - regression
 
-cypher_file: organization_institutions_from_study_personnel.cypher
+cypher_query_key: DCC_TC01_verify_organizations
 cypher_parameters: {}
 
 api:

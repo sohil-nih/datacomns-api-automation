@@ -11,7 +11,7 @@ tags:
   - smoke
   - regression
 
-cypher_file: namespace_study_ids_from_participants.cypher
+cypher_query_key: DCC_TC05_verify_namespace
 cypher_parameters: {}
 
 api:

@@ -1,0 +1,73 @@
+# DCC Memgraph Cypher — keys: DCC_TC##_... (same stem as pytest function without test_ prefix).
+# Pair YAML: cypher_query_key: <key below>
+
+DCC_TC01_verify_organizations: |
+  MATCH (sp:study_personnel)-[:of_study_personnel]->(:study)
+  RETURN DISTINCT sp.institution AS institution
+  ORDER BY institution
+
+DCC_TC02_verify_tumor_grade_count: |
+  MATCH (sa:sample)
+  WHERE sa.sample_id IS NOT NULL
+    AND toString(sa.sample_id) <> ''
+
+  OPTIONAL MATCH (d:diagnosis)-[:of_diagnosis]->(sa)
+
+  OPTIONAL MATCH (sa)-[:of_sample]->(:cell_line)-[:of_cell_line]->(st1:study)
+
+  OPTIONAL MATCH (sa)-[:of_sample]->(:participant)
+                 -[:of_participant]->(:consent_group)
+                 -[:of_consent_group]->(st2:study)
+
+  WITH sa,
+       d,
+       coalesce(st1, st2) AS st
+  WHERE st IS NOT NULL
+
+  WITH sa.sample_id AS sample_id,
+       st.study_id AS study_id,
+       d.tumor_grade AS tumor_grade
+
+  WITH DISTINCT sample_id, study_id, tumor_grade
+
+  RETURN tumor_grade AS value,
+         COUNT(DISTINCT toString(sample_id) + ':' + toString(study_id)) AS count
+  ORDER BY count DESC, value ASC
+
+DCC_TC03_verify_file_summary: |
+  MATCH (sf:sequencing_file)-[:of_sequencing_file]->(sa:sample)
+  WHERE sf.id IS NOT NULL AND toString(sf.id) <> ""
+  OPTIONAL MATCH (sa)-[:of_sample]->(:cell_line)-[:of_cell_line]->(st1:study)
+  OPTIONAL MATCH (sa)-[:of_sample]->(:participant)-[:of_participant]->(:consent_group)-[:of_consent_group]->(st2:study)
+  WITH sf.id AS file_id,
+       sa.sample_id AS sample_id,
+       coalesce(st1, st2).study_id AS study_id
+  WHERE study_id IS NOT NULL
+  RETURN COUNT(DISTINCT toString(file_id) + ':' + toString(sample_id) + ':' + toString(study_id)) AS total_files
+
+DCC_TC04_verify_subjects_count_by_sex: |
+  MATCH (p:participant)
+  OPTIONAL MATCH (p)-[:of_participant]->(:consent_group)
+                 -[:of_consent_group]->(st:study)
+  WITH
+      st.study_id AS study_id,
+      p.participant_id AS participant_id,
+      CASE
+          WHEN toLower(p.sex_at_birth) IN ['male', 'm'] THEN 'M'
+          WHEN toLower(p.sex_at_birth) IN ['female', 'f'] THEN 'F'
+          ELSE 'U'
+      END AS sex_code
+  WHERE study_id IS NOT NULL
+    AND participant_id IS NOT NULL
+  RETURN
+      sex_code AS sex_at_birth,
+      COUNT(DISTINCT toString(study_id) + '|' + toString(participant_id)) AS count
+  ORDER BY count DESC
+
+DCC_TC05_verify_namespace: |
+  // Distinct study ids reachable from participants (same linkage pattern as sex-count TC04).
+  // GET /namespace lists each catalog entry with id.name — typically phs* / study accession.
+  MATCH (p:participant)-[:of_participant]->(:consent_group)-[:of_consent_group]->(st:study)
+  WHERE st.study_id IS NOT NULL AND toString(st.study_id) <> ''
+  RETURN DISTINCT toString(st.study_id) AS namespace_name
+  ORDER BY namespace_name

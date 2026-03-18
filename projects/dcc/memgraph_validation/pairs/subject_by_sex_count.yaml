@@ -8,7 +8,7 @@ tags:
   - smoke
   - regression
 
-cypher_file: subject_by_sex_count.cypher
+cypher_query_key: DCC_TC04_verify_subjects_count_by_sex
 cypher_parameters: {}
 
 api:

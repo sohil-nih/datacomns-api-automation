@@ -8,6 +8,12 @@ Memgraph connection for these pairs:
 
 Skip: `DATACOMNS_SKIP_MEMGRAPH_DCC_TESTS=1` or `DATACOMNS_SKIP_MEMGRAPH_TESTS=1`
 
+## Cypher queries (`cypher/queries.yaml`)
+
+DCC Memgraph queries live in **[`cypher/queries.yaml`](cypher/queries.yaml)**. Use **`cypher_query_key`** like **`DCC_TC01_verify_organizations`** (pytest function name without the **`test_`** prefix). Optional **`cypher_queries_yaml: other.yaml`** if you split bundles (default is `queries.yaml`).
+
+Federation and other projects can keep using **`cypher_file: *.cypher`** or inline **`cypher:`** in pair YAML — those remain supported.
+
 ## Comparator: `graph_institutions_subset_of_dcc_organization_api`
 
 Memgraph rows (e.g. column `institution`) must each appear in the **union** of:

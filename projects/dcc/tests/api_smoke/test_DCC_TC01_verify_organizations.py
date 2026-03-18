@@ -3,13 +3,9 @@ DCC TC01 — verify organizations (GET /organization vs Memgraph).
 
 REST: https://dcc-qa.ccdi.cancer.gov/api/v1/organization
 
-Cypher::
+Cypher: key ``DCC_TC01_verify_organizations`` in ``memgraph_validation/cypher/queries.yaml``.
 
-    MATCH (sp:study_personnel)-[:of_study_personnel]->(:study)
-    RETURN DISTINCT sp.institution AS institution
-    ORDER BY institution
-
-Pair: memgraph_validation/pairs/organization_list_vs_study_personnel_institutions.yaml
+Pair: ``memgraph_validation/pairs/organization_list_vs_study_personnel_institutions.yaml``
 """
 
 from __future__ import annotations

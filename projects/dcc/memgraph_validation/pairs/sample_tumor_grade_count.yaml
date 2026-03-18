@@ -9,7 +9,7 @@ tags:
   - smoke
   - regression
 
-cypher_file: sample_tumor_grade_count.cypher
+cypher_query_key: DCC_TC02_verify_tumor_grade_count
 cypher_parameters: {}
 
 api:

@@ -8,7 +8,7 @@ tags:
   - smoke
   - regression
 
-cypher_file: file_summary_total.cypher
+cypher_query_key: DCC_TC03_verify_file_summary
 cypher_parameters: {}
 
 api:
