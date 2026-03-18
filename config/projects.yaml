@@ -1,0 +1,25 @@
+# Central registry for all API "projects". Add a new block + new folder under projects/.
+#
+# Fields:
+#   display_name     Human-readable name
+#   base_url_env     Environment variable that overrides default_base_url
+#   default_base_url URL when env is unset (QA/dev)
+#   api_prefix       Prepended to relative paths in tests (e.g. /api/v1)
+#   optional_headers_env  Optional env var: JSON string of default headers
+
+projects:
+  federation:
+    display_name: "CCDI Federation Service"
+    base_url_env: "DATACOMNS_FEDERATION_BASE_URL"
+    default_base_url: "https://dcc-qa.ccdi.cancer.gov"
+    api_prefix: "/api/v1"
+    optional_headers_env: null
+    openapi_relative: "projects/federation/contracts/openapi.json"
+
+  dcc:
+    display_name: "CCDI Data Commons (DCC) API"
+    base_url_env: "DATACOMNS_DCC_BASE_URL"
+    default_base_url: "https://dcc-qa.ccdi.cancer.gov"
+    api_prefix: "/api/v1"
+    optional_headers_env: null
+    openapi_relative: "projects/dcc/contracts/openapi.json"

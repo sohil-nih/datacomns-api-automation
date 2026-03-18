@@ -1,0 +1,25 @@
+# Memgraph: distinct (sample_id, study_id, tumor_grade) → counts by grade; null grade ↔ API "missing"
+# API: GET /api/v1/sample/by/tumor_grade/count — { total, missing, values: [{ value, count }] }
+id: dcc_sample_tumor_grade_count
+description: >
+  Compare Memgraph tumor-grade bucket counts (samples linked to a study) to
+  DCC GET /sample/by/tumor_grade/count.
+tags:
+  - memgraph_api
+  - smoke
+  - regression
+
+cypher_file: sample_tumor_grade_count.cypher
+cypher_parameters: {}
+
+api:
+  method: GET
+  path: /sample/by/tumor_grade/count
+  query: {}
+
+comparison:
+  type: dcc_value_count_buckets_match
+  api_missing_field: missing
+  api_values_field: values
+  graph_value_key: value
+  graph_count_key: count

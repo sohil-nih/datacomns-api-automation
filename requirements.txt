@@ -1,0 +1,13 @@
+# API testing core
+httpx>=0.27.0,<1.0.0
+pytest>=8.0.0,<9.0.0
+pytest-html>=4.1.0
+python-dotenv>=1.0.0
+PyYAML>=6.0.1
+
+# Optional: contract validation & AI-ready JSON handling
+jsonschema>=4.21.0
+referencing>=0.35.0
+
+# Memgraph / Neo4j Bolt
+neo4j>=5.14.0,<6.0.0

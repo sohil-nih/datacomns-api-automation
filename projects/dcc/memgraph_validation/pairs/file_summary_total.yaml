@@ -1,0 +1,23 @@
+# Memgraph: distinct (file_id, sample_id, study_id) for sequencing_file → sample → study
+# API: GET /api/v1/file/summary → { "counts": { "total": N } }
+id: dcc_file_summary_total
+description: >
+  Compare Memgraph count of file–sample–study tuples to DCC GET /file/summary counts.total.
+tags:
+  - memgraph_api
+  - smoke
+  - regression
+
+cypher_file: file_summary_total.cypher
+cypher_parameters: {}
+
+api:
+  method: GET
+  path: /file/summary
+  query: {}
+
+comparison:
+  type: dcc_scalar_match
+  graph_scalar_column: total_files
+  api_scalar_paths:
+    - counts.total

@@ -1,0 +1,24 @@
+# Memgraph: distinct study_id from participant → consent_group → study
+# API: GET /api/v1/namespace — root array; each item has id.name (must list every graph study id)
+#
+# Note: The /namespace endpoint is a catalog of namespaces, not sex counts. TC04 covers
+# GET /subject/by/sex/count with the participant sex aggregation query.
+id: dcc_namespace_study_ids_in_api
+description: >
+  Every Memgraph study_id linked from a participant must appear as id.name on GET /namespace.
+tags:
+  - memgraph_api
+  - smoke
+  - regression
+
+cypher_file: namespace_study_ids_from_participants.cypher
+cypher_parameters: {}
+
+api:
+  method: GET
+  path: /namespace
+  query: {}
+
+comparison:
+  type: graph_study_ids_in_dcc_namespace_api
+  graph_column: namespace_name

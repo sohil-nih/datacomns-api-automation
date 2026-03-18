@@ -1,0 +1,31 @@
+# Team: validate Cypher against QA Memgraph — labels/properties may differ.
+id: subject_sex_m_asian_page1
+description: >
+  REST GET /subject?sex=M&race=Asian&page=1 vs Memgraph subjects matching sex and race.
+  API page subjects must each appear in the graph result set.
+tags:
+  - memgraph_api
+  - smoke
+  - regression
+
+cypher_file: subject_sex_m_race_asian.cypher
+cypher_parameters:
+  sex: M
+  race_contains: asian
+
+api:
+  method: GET
+  path: /subject
+  query:
+    sex: M
+    race: Asian
+    page: 1
+
+comparison:
+  type: api_identifiers_subset_of_graph
+  graph_key_organization: organization
+  graph_key_namespace: namespace
+  graph_key_subject: subject_id
+  api_list_path:
+    - data.subjects
+    - subjects

@@ -1,0 +1,84 @@
+# Onboarding — datacomns-api-automation
+
+Welcome. This repo is an **API test framework**: shared libraries under `framework/`, one folder per API under `projects/`.
+
+## Day 1 — run something
+
+1. **Python 3.10+** installed.
+2. From repo root:
+
+   ```bash
+   cd datacomns-api-automation
+   python3 -m venv .venv
+   source .venv/bin/activate   # Windows: .venv\Scripts\activate
+   pip install -r requirements.txt
+   cp .env.example .env
+   ```
+
+3. **Offline smoke** (no VPN):
+
+   ```bash
+   pytest projects/federation/tests/smoke/test_project_config_smoke.py -v
+   ```
+
+4. **Live smoke** (needs `https://dcc-qa.ccdi.cancer.gov` reachable):
+
+   ```bash
+   pytest projects/federation/tests/smoke/test_subject_summary_smoke.py -v
+   ```
+
+   If you are offline: `export DATACOMNS_SKIP_LIVE_TESTS=1` and live tests skip.
+
+## Mental model
+
+| Path | Purpose |
+|------|---------|
+| `framework/` | **Do not duplicate** — HTTP client, config loader, assertions, AI context helpers |
+| `config/projects.yaml` | **Single registry** — base URLs per project (env overrides) |
+| `projects/<slug>/` | One API product; `conftest.py` wires fixtures |
+| `projects/<slug>/tests/smoke/` | Fast checks |
+| `projects/<slug>/tests/regression/` | Deeper coverage |
+
+## Writing your first test
+
+1. Open `projects/federation/tests/smoke/test_subject_summary_smoke.py` as a template.
+2. Use `api_client.get("/your/path", params={...})`.
+3. Use `assert_successful_json(response)` from `framework.assertions`.
+4. Add `@pytest.mark.smoke` or `@pytest.mark.regression`.
+
+Paths are **relative to** `api_prefix` (e.g. `/subject/summary` → full URL `base + /api/v1 + /subject/summary`).
+
+## Commands cheat sheet
+
+| Goal | Command |
+|------|---------|
+| Smoke (Federation) | `./scripts/run_smoke.sh` or `pytest projects/federation -m smoke` |
+| Regression | `./scripts/run_regression.sh` |
+| Everything | `./scripts/run_all.sh` |
+| Single file | `pytest path/to/test_file.py -v` |
+| Single test | `pytest path/to/test_file.py::test_name -v` |
+| HTML report | `pytest projects/federation -m smoke --html=report.html --self-contained-html` |
+
+## Adding another API
+
+Read **[ADDING_NEW_PROJECT.md](ADDING_NEW_PROJECT.md)** — copy `projects/federation`, change slug, register in YAML.
+
+## Memgraph vs API pairs
+
+1. Set `MEMGRAPH_URI`, `MEMGRAPH_USER`, `MEMGRAPH_PASSWORD` (see `.env.example`).
+2. Author YAML under `projects/federation/memgraph_validation/pairs/`.
+3. Run: `pytest projects/federation/tests/memgraph -m "memgraph_api and smoke" -v`
+4. CI without DB: `DATACOMNS_SKIP_MEMGRAPH_TESTS=1`
+
+## AI later
+
+Read **[AI_INTEGRATION.md](AI_INTEGRATION.md)**.
+
+## Print API / Memgraph results
+
+Printing is **on by default**. Set **`DATACOMNS_PRINT_RESPONSES=0`** in `.env` to turn off `[DATACOMNS_PRINT]` logs. **`pytest.ini` includes `-s`** so that output appears in the terminal; use **`pytest --capture=sys`** when you want normal capture.
+
+## Who to ask
+
+- **URLs / env**: `config/projects.yaml` + `.env`
+- **Broken shared helper**: `framework/` (change once, all projects benefit)

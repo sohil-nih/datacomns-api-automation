@@ -1,0 +1,22 @@
+# Memgraph: distinct study_personnel.institution linked to studies
+# API: GET /api/v1/organization — graph institutions must appear in API-exposed strings.
+id: dcc_organization_vs_study_personnel_institutions
+description: >
+  Compare Memgraph institutions (study_personnel → study) against DCC organization
+  endpoint (names, identifiers, metadata.institution values).
+tags:
+  - memgraph_api
+  - smoke
+  - regression
+
+cypher_file: organization_institutions_from_study_personnel.cypher
+cypher_parameters: {}
+
+api:
+  method: GET
+  path: /organization
+  query: {}
+
+comparison:
+  type: graph_institutions_subset_of_dcc_organization_api
+  graph_column: institution

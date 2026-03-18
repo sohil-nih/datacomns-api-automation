@@ -1,0 +1,24 @@
+# Memgraph: (study, participant) pairs with M/F/U sex code → counts per bucket
+# API: GET /api/v1/subject/by/sex/count — { total, missing, values: [{ value, count }] }
+id: dcc_subject_by_sex_count
+description: >
+  Compare Memgraph subject counts by sex (M/F/U) to DCC GET /subject/by/sex/count.
+tags:
+  - memgraph_api
+  - smoke
+  - regression
+
+cypher_file: subject_by_sex_count.cypher
+cypher_parameters: {}
+
+api:
+  method: GET
+  path: /subject/by/sex/count
+  query: {}
+
+comparison:
+  type: dcc_value_count_buckets_match
+  api_missing_field: missing
+  api_values_field: values
+  graph_value_key: sex_at_birth
+  graph_count_key: count
