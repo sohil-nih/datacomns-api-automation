@@ -322,9 +322,18 @@ def _html_page(summary: Dict[str, Any]) -> str:
             return "FAILED", "cmp-fail"
         return "ERROR", "cmp-err"
 
+    def _test_case_display_name(test_row: Dict[str, Any], comp: Dict[str, Any]) -> str:
+        nodeid = str(test_row.get("nodeid") or "")
+        if "::" in nodeid:
+            return nodeid.split("::")[-1].strip()
+        if nodeid:
+            return nodeid
+        return str(comp.get("pair_id") or "Comparison")
+
     cmp_table_body: List[str] = []
     for t in rows_sorted:
         for c in t.get("api_db_comparisons") or []:
+            test_name = _test_case_display_name(t, c)
             vd, st_cls = _verdict_display(c)
             gprev = (c.get("graph_response_preview") or "").strip() or "(no database payload captured)"
             aprev = (c.get("api_response_preview") or "").strip() or "(no API payload captured)"
@@ -337,6 +346,9 @@ def _html_page(summary: Dict[str, Any]) -> str:
                 mismatch_cell = f'<pre class="cell-json mismatch-pre err-pre">{_html_escape_pre(det, None)}</pre>' if det else escape(str(c.get("phase", "error")))
 
             cmp_table_body.append(
+                "<tr class='cmp-test-header'>"
+                f"<td colspan='4' class='cmp-test-name-cell'><span class='cmp-test-name'>{escape(test_name)}</span></td>"
+                "</tr>"
                 "<tr>"
                 f'<td class="payload-col"><pre class="cell-json api-cell">{_html_escape_pre(aprev, None)}</pre></td>'
                 f'<td class="payload-col"><pre class="cell-json db-cell">{_html_escape_pre(gprev, None)}</pre></td>'
@@ -364,7 +376,7 @@ def _html_page(summary: Dict[str, Any]) -> str:
             "<th>API response <span class='th-sub'>(parsed JSON from REST)</span></th>"
             "<th>Database response <span class='th-sub'>(Memgraph / Cypher rows)</span></th>"
             "<th>Pass / Fail</th>"
-            "<th>Mismatch or error detail</th>"
+            "<th>Mismatch</th>"
             "</tr></thead><tbody>"
             + "".join(cmp_table_body)
             + "</tbody></table>"
@@ -372,7 +384,7 @@ def _html_page(summary: Dict[str, Any]) -> str:
     else:
         cmp_table_html = (
             '<table class="tbl cmp-data"><thead><tr>'
-            "<th>API response</th><th>Database response</th><th>Pass / Fail</th><th>Mismatch detail</th>"
+            "<th>API response</th><th>Database response</th><th>Pass / Fail</th><th>Mismatch</th>"
             "</tr></thead><tbody><tr>"
             '<td colspan="4" class="cmp-empty-row">'
             "<p><strong>No comparison rows</strong> — not an error. This session did not run "
@@ -453,6 +465,9 @@ pre.trace,pre.cap{white-space:pre-wrap;word-break:break-word;font-size:11px;marg
 .cmp-data .payload-col{min-width:18rem;width:38%;vertical-align:top;}
 .cmp-data .status-col{text-align:center;vertical-align:middle;min-width:5.5rem;}
 .cmp-data .mismatch-col{min-width:12rem;max-width:22%;vertical-align:top;}
+.cmp-test-name-cell{padding:.4rem .75rem;background:var(--th);border-bottom:1px solid var(--bd);vertical-align:middle;}
+.cmp-test-name{font-weight:600;font-size:.8rem;letter-spacing:.02em;text-transform:none;}
+.cmp-data .cmp-test-header + tr .payload-col{border-top:none;}
 .cell-json{font-family:ui-monospace,monospace;font-size:9.5px;line-height:1.35;margin:0;padding:.5rem;
   max-height:22rem;overflow:auto;white-space:pre-wrap;word-break:break-word;
   background:var(--bg);border:1px solid var(--bd);border-radius:6px;}
