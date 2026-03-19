@@ -79,7 +79,8 @@ Separate folder **`projects/dcc/`** — REST + Memgraph validation against the D
 | DCC TC03 | `pytest projects/dcc/tests/api_smoke/test_DCC_TC03_verify_file_summary.py -v` |
 | DCC TC04 | `pytest projects/dcc/tests/api_smoke/test_DCC_TC04_verify_subjects_count_by_sex.py -v` |
 | DCC TC05 | `pytest projects/dcc/tests/api_smoke/test_DCC_TC05_verify_namespace.py -v` |
-| DCC Memgraph + API pairs | `bash scripts/run_dcc_memgraph_smoke.sh` |
+| **DCC regression (TC01–TC05)** | `bash scripts/run_dcc_regression.sh` or `pytest projects/dcc/tests/api_smoke -m dcc_regression -v` |
+| DCC Memgraph + API pairs (batch) | `bash scripts/run_dcc_memgraph_smoke.sh` |
 
 See [projects/dcc/README.md](projects/dcc/README.md).
 

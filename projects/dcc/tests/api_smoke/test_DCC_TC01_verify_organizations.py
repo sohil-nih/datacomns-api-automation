@@ -20,7 +20,13 @@ from framework.memgraph.runner import run_validation_pair
 _MEMGRAPH_ROOT = Path(__file__).resolve().parents[2] / "memgraph_validation"
 _PAIR_ID = "dcc_organization_vs_study_personnel_institutions"
 
-pytestmark = [pytest.mark.smoke, pytest.mark.project_dcc, pytest.mark.memgraph_api]
+pytestmark = [
+    pytest.mark.smoke,
+    pytest.mark.regression,
+    pytest.mark.dcc_regression,
+    pytest.mark.project_dcc,
+    pytest.mark.memgraph_api,
+]
 
 _PAIR = next(
     (p for p in load_validation_pairs(_MEMGRAPH_ROOT) if p.id == _PAIR_ID),
