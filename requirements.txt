@@ -5,6 +5,9 @@ pytest-html>=4.1.0
 python-dotenv>=1.0.0
 PyYAML>=6.0.1
 
+# Optional: local test-runner UI (launcher.py)
+flask>=3.0.0,<4.0.0
+
 # Optional: contract validation & AI-ready JSON handling
 jsonschema>=4.21.0
 referencing>=0.35.0
