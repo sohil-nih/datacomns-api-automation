@@ -5,6 +5,8 @@ Uses httpx but exposes the same response shape the ported STS-style runners expe
 ``get(path, params) -> APIResponse`` with ``status_code``, ``body``, ``json()``, and
 ``duration`` (seconds). ``ContractAPIClient`` can be built from ``ProjectConfig`` so
 base URL + ``api_prefix`` match the rest of datacomns (e.g. ``.../api/v1`` + ``/subject``).
+
+Per-request timeout for httpx is **120 s** by default (slow filtered list endpoints).
 """
 from __future__ import annotations
 
@@ -77,10 +79,10 @@ class ContractAPIClient:
         base_url: str,
         *,
         headers: Mapping[str, str] | None = None,
-        timeout: float = 60.0,
+        timeout: float = 120.0,
         verify: bool | None = None,
     ) -> None:
-        """Configure root URL, optional extra headers, timeout, and TLS verify (default from env)."""
+        """Configure root URL, optional extra headers, timeout (default 120s), and TLS verify (default from env)."""
         self.base_url = base_url.rstrip("/")
         self._headers = {"Accept": "application/json", "User-Agent": "datacomns-contract-runner/1.0"}
         if headers:
@@ -95,7 +97,7 @@ class ContractAPIClient:
         cls,
         cfg: ProjectConfig,
         *,
-        timeout: float = 60.0,
+        timeout: float = 120.0,
         verify: bool | None = None,
     ) -> ContractAPIClient:
         """Build a client from ``projects.yaml`` (``dcc`` slug): ``base_url`` + ``api_prefix`` with no trailing slash issues."""

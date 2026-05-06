@@ -180,7 +180,7 @@ def run_functional_tests(
     Case keys used: ``path``, ``params``, ``expected_status``, ``operation_id``, ``summary``,
     ``tag``, ``negative``, ``pagination_pair_assert``, ``pagination_pair_params_a``/``_b``,
     ``expected_json``, ``skip_oob_assert``, ``pagination_assert_max_items``,
-    ``pagination_list_key``, ``response_schema_ref``.
+    ``pagination_list_key``, ``response_schema_ref``, ``expect_non_empty_data``.
     """
     results = []
     for case in cases:
@@ -261,6 +261,7 @@ def run_functional_tests(
             or case.get("expected_json") is not None
             or case.get("skip_oob_assert")
             or case.get("pagination_assert_max_items") is not None
+            or case.get("expect_non_empty_data")
         ):
             shape_ok, shape_error = _check_basic_shape(response, case)
             if not shape_ok:
@@ -344,6 +345,12 @@ def _check_basic_shape(response: APIResponse, case: dict) -> tuple[bool, str | N
                 f"Pagination: response list length {len(target)} exceeds limit "
                 f"(expected at most {max_items})",
             )
+    if case.get("expect_non_empty_data"):
+        if not isinstance(data, dict):
+            return False, "expect_non_empty_data: response must be a JSON object with data[]"
+        arr = data.get("data")
+        if not isinstance(arr, list) or len(arr) < 1:
+            return False, "expect_non_empty_data: top-level data[] must be non-empty"
     if data is None:
         return True, None
     schema_ref = case.get("response_schema_ref")

@@ -4,9 +4,12 @@ OpenAPI-driven GET case generation for the DCC REST API.
 Walks the spec (``_iter_ops``), keeps **GET** only, and builds case dicts with ``path``,
 ``params``, ``expected_status``, ``operation_id``, ``summary``, ``tag``, ``negative``,
 and optional pagination / schema-ref metadata consumed by ``run_functional_tests_dcc``.
+List routes ``/subject``, ``/sample``, ``/file`` also get up to ``MAX_FILTER_EXTRA_CASES_PER_OP``
+extra cases when ``test_data`` includes ``filter_examples`` from ``discover_dcc``.
 
-Positive paths need ``test_data`` from ``discover_dcc``. Negative path cases use garbage
-segments; bad-query cases assume live DCC returns **400** for invalid ``page`` / ``per_page``.
+Positive paths need ``test_data`` from ``discover_dcc`` (including optional ``filter_examples``
+for list endpoints). Negative path cases use garbage segments; bad-query cases assume live DCC
+returns **400** for invalid ``page`` / ``per_page``.
 """
 from __future__ import annotations
 
@@ -21,6 +24,16 @@ from framework.contract_runner.generator_shared import (
 )
 
 BASE_PATH_DCC = "/api/v1"
+
+# Root list paths that accept metadata filter query params (not ``/summary`` siblings).
+LIST_PATH_TO_FILTER_RESOURCE: dict[str, str] = {
+    "/api/v1/subject": "subject",
+    "/api/v1/sample": "sample",
+    "/api/v1/file": "file",
+}
+
+# Cap extra GETs per list operation from discovery-driven filters (avoid combinatorial blowup).
+MAX_FILTER_EXTRA_CASES_PER_OP = 20
 
 
 def _schema_type_set(schema: dict) -> set[str]:
@@ -94,6 +107,17 @@ def _has_page_and_per_page(query_params: list[dict]) -> bool:
     """True if both integer ``page`` and ``per_page`` exist (enables pagination extras)."""
     names = _integer_page_per_page_names(query_params)
     return "page" in names and "per_page" in names
+
+
+def _query_param_names_from_spec(query_params: list[dict]) -> set[str]:
+    """Declared query parameter names for this operation (e.g. ``sex``, ``page``)."""
+    out: set[str] = set()
+    for p in query_params:
+        if isinstance(p, dict):
+            n = p.get("name")
+            if n:
+                out.add(str(n))
+    return out
 
 
 def _resolve_path_params_dcc(path_template: str, path_params: list[dict], test_data: dict) -> dict | None:
@@ -207,6 +231,7 @@ def generate_cases_dcc(
     base_path: str = BASE_PATH_DCC,
     tag_filter: list[str] | None = None,
     include_negative: bool = True,
+    strict_non_empty_filter: bool = False,
 ) -> list[dict]:
     """
     Produce GET contract cases: positive 200s, optional pagination check, bad query, invalid path.
@@ -217,6 +242,7 @@ def generate_cases_dcc(
         base_path: Prefix stripped from spec paths (default ``/api/v1``).
         tag_filter: If set, only operations whose ``tags`` overlap this list.
         include_negative: If False, skip bad-query and invalid-path cases.
+        strict_non_empty_filter: If True, discovery-filter cases require non-empty ``data`` (stricter).
 
     Returns:
         List of case dicts for the functional runner.
@@ -238,6 +264,8 @@ def generate_cases_dcc(
         tag = tags[0] if tags else None
         schema_ref = _get_schema_ref(op)
 
+        query_names = _query_param_names_from_spec(query_params)
+
         path_values = _resolve_path_params_dcc(path_template, path_params, test_data)
         if path_values is not None:
             path_str = _fill_path_template(path_template, path_values, base_path)
@@ -252,6 +280,36 @@ def generate_cases_dcc(
                 "negative": False,
                 "response_schema_ref": schema_ref,
             })
+
+            list_resource = LIST_PATH_TO_FILTER_RESOURCE.get(path_template)
+            if list_resource:
+                examples = (test_data.get("filter_examples") or {}).get(list_resource) or {}
+                n_filter = 0
+                for param_name in sorted(examples.keys()):
+                    if n_filter >= MAX_FILTER_EXTRA_CASES_PER_OP:
+                        break
+                    if param_name not in query_names:
+                        continue
+                    val = examples[param_name]
+                    if val is None or str(val).strip() == "":
+                        continue
+                    fq = dict(query_vals) if query_vals else {}
+                    fq[param_name] = val
+                    suffix = param_name.replace(".", "_").replace("/", "_")
+                    filt_case: dict = {
+                        "path": path_str,
+                        "params": fq,
+                        "expected_status": 200,
+                        "operation_id": f"{operation_id}__filter_{suffix}",
+                        "summary": f"{summary} (filter {param_name}={val!r})",
+                        "tag": tag,
+                        "negative": False,
+                        "response_schema_ref": schema_ref,
+                    }
+                    if strict_non_empty_filter:
+                        filt_case["expect_non_empty_data"] = True
+                    cases.append(filt_case)
+                    n_filter += 1
 
             pp_names = _integer_page_per_page_names(query_params)
             if (

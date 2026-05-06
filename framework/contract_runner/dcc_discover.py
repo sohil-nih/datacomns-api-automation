@@ -3,13 +3,15 @@ Live DCC API discovery for OpenAPI-driven contract tests.
 
 Calls list endpoints (``/subject``, ``/sample``, ``/file``, ``/organization``) to collect
 real ``organization``, ``namespace``, entity ``name`` values and canned ``field`` keys for
-count-by routes. Output is merged into ``test_data`` passed to ``generate_cases_dcc``.
+count-by routes, plus ``filter_examples`` (query param → example value from live ``metadata``).
+Output is merged into ``test_data`` passed to ``generate_cases_dcc``.
 If the first ``/subject`` call fails or returns empty ``data``, returns an empty dict and
 few generated cases can be built.
 """
 from __future__ import annotations
 
 from framework.contract_runner.client import ContractAPIClient
+from framework.contract_runner.dcc_filter_extract import build_filter_examples_from_list_payloads
 
 
 def _entity_triple(record: dict) -> tuple[str, str, str] | None:
@@ -37,11 +39,12 @@ def discover_dcc(client: ContractAPIClient) -> dict:
 
     Returns:
         Keys such as ``organization``, ``namespace``, ``dcc_subject_name``, sample/file
-        triples, ``dcc_organization_name``, and fixed count-field strings for ``/by/`` routes.
+        triples, ``dcc_organization_name``, fixed count-field strings for ``/by/`` routes,
+        and ``filter_examples`` for list-endpoint query filters.
         Empty dict if discovery cannot read at least one subject row.
     """
     data: dict = {}
-    list_params = {"page": 1, "per_page": 10}
+    list_params = {"page": 1, "per_page": 50}
 
     r_sub = client.get("/subject", list_params)
     if r_sub.status_code != 200:
@@ -66,11 +69,13 @@ def discover_dcc(client: ContractAPIClient) -> dict:
     data["dcc_sample_count_field"] = "disease_phase"
     data["dcc_file_count_field"] = "type"
 
+    rows_samp: list | None = None
     r_samp = client.get("/sample", list_params)
     if r_samp.status_code == 200:
         b_s = r_samp.json()
         if isinstance(b_s, dict):
             dr = b_s.get("data")
+            rows_samp = dr if isinstance(dr, list) else None
             if isinstance(dr, list) and dr and isinstance(dr[0], dict):
                 t2 = _entity_triple(dr[0])
                 if t2:
@@ -78,11 +83,13 @@ def discover_dcc(client: ContractAPIClient) -> dict:
                     data["dcc_sample_namespace"] = t2[1]
                     data["dcc_sample_name"] = t2[2]
 
+    rows_file: list | None = None
     r_file = client.get("/file", list_params)
     if r_file.status_code == 200:
         b_f = r_file.json()
         if isinstance(b_f, dict):
             dr = b_f.get("data")
+            rows_file = dr if isinstance(dr, list) else None
             if isinstance(dr, list) and dr and isinstance(dr[0], dict):
                 t3 = _entity_triple(dr[0])
                 if t3:
@@ -101,5 +108,9 @@ def discover_dcc(client: ContractAPIClient) -> dict:
                 data["dcc_organization_name"] = str(ident) if ident else (str(name) if name else None)
                 if not data.get("dcc_organization_name"):
                     data.pop("dcc_organization_name", None)
+
+    fe = build_filter_examples_from_list_payloads(rows_sub, rows_samp, rows_file)
+    if fe:
+        data["filter_examples"] = fe
 
     return data
