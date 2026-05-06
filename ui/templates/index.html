@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Datacomns API Test Runner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3352;
+      --accent: #4f8ef7; --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+      --text: #e2e8f0; --text-muted: #64748b; --text-dim: #94a3b8;
+      --mono: ui-monospace, monospace; --radius: 8px;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 14px; min-height: 100vh; display: flex; flex-direction: column;
+    }
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 12px;
+    }
+    .logo {
+      width: 28px; height: 28px; background: var(--accent); border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    header h1 { font-size: 16px; font-weight: 600; }
+    header .subtitle { font-size: 12px; color: var(--text-muted); margin-left: 4px; }
+    main { flex: 1; display: flex; flex-direction: column; padding: 20px 24px; gap: 16px; max-width: 1100px; width: 100%; margin: 0 auto; }
+    .controls-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px 20px; display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+    select {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); font-size: 13px; padding: 8px 32px 8px 12px; min-width: 200px;
+      appearance: none; cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+    }
+    select:focus { outline: none; border-color: var(--accent); }
+    select:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-group { display: flex; gap: 8px; margin-left: auto; }
+    button { border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; padding: 8px 20px; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #btn-run { background: var(--accent); color: #fff; }
+    #btn-stop { background: var(--surface2); border: 1px solid var(--border); color: var(--red); }
+    #btn-clear { background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); }
+    .status-bar {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px 20px; display: flex; align-items: center; gap: 16px;
+    }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted); }
+    .status-dot.running { background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+    .status-dot.passed { background: var(--green); }
+    .status-dot.failed { background: var(--red); }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .status-right { margin-left: auto; }
+    #elapsed-badge { font-size: 12px; font-family: var(--mono); color: var(--text-dim); display: none; }
+    .progress-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+    #progress-fill { height: 100%; width: 0%; border-radius: 99px; background: var(--accent); transition: width 0.5s; }
+    #progress-fill.indeterminate { width: 35%; animation: indeterminate 1.6s ease-in-out infinite; }
+    #progress-fill.passed { background: var(--green); width: 100%; }
+    #progress-fill.failed { background: var(--red); width: 100%; }
+    @keyframes indeterminate { 0% { transform: translateX(-130%); } 60%, 100% { transform: translateX(320%); } }
+    .log-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      flex: 1; display: flex; flex-direction: column; min-height: 360px; overflow: hidden;
+    }
+    .log-header { display: flex; padding: 10px 16px; border-bottom: 1px solid var(--border); }
+    #log-output { flex: 1; overflow-y: auto; padding: 14px 16px; font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text-dim); white-space: pre-wrap; word-break: break-all; }
+    #log-output:empty::before { content: "Waiting for test output…"; color: var(--text-muted); font-style: italic; }
+    .log-pass { color: var(--green); } .log-fail { color: var(--red); } .log-warn { color: var(--yellow); }
+    .log-heading { color: var(--accent); font-weight: bold; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">⚡</div>
+  <h1>Datacomns API Test Runner</h1>
+  <span class="subtitle">DCC contract, perf &amp; pytest</span>
+</header>
+<main>
+  <div class="controls-card">
+    <div class="field">
+      <label for="env-select">Environment</label>
+      <select id="env-select">
+        <option value="qa" selected>QA</option>
+        <option value="stage">Stage</option>
+        <option value="prod">Prod</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="suite-select">Suite</label>
+      <select id="suite-select">
+        <option value="dcc_contract" selected>DCC — OpenAPI contract (autogen)</option>
+        <option value="dcc_perf">DCC — Performance</option>
+        <option value="dcc_pytest_smoke">DCC — Pytest smoke (Memgraph pairs)</option>
+        <option value="dcc_pytest_regression">DCC — Pytest regression (dcc_regression)</option>
+      </select>
+    </div>
+    <div class="btn-group">
+      <button id="btn-run">▶ Run</button>
+      <button id="btn-stop" disabled>■ Stop</button>
+      <button id="btn-clear">Clear</button>
+    </div>
+  </div>
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">Idle</span>
+    <span id="status-detail"></span>
+    <div class="status-right"><span id="elapsed-badge"></span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="progress-track" style="flex:1;"><div id="progress-fill"></div></div>
+  </div>
+  <div class="log-card">
+    <div class="log-header"><span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Output</span><span id="line-count" style="margin-left:auto;font-size:11px;color:var(--text-muted);"></span></div>
+    <div id="log-output"></div>
+  </div>
+</main>
+<script>
+  const envSelect = document.getElementById('env-select');
+  const suiteSelect = document.getElementById('suite-select');
+  const btnRun = document.getElementById('btn-run');
+  const btnStop = document.getElementById('btn-stop');
+  const btnClear = document.getElementById('btn-clear');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+  const statusDetail = document.getElementById('status-detail');
+  const elapsedBadge = document.getElementById('elapsed-badge');
+  const progressFill = document.getElementById('progress-fill');
+  const logOutput = document.getElementById('log-output');
+  const lineCount = document.getElementById('line-count');
+  let currentRunId = null, eventSource = null, elapsedTimer = null, startedAt = null, lineTotal = 0, autoScroll = true;
+  const SUITE_LABELS = { dcc_contract: 'DCC contract', dcc_perf: 'DCC perf', dcc_pytest_smoke: 'Pytest smoke', dcc_pytest_regression: 'Pytest regression' };
+  const ENV_LABELS = { qa: 'QA', stage: 'Stage', prod: 'Prod' };
+  function colorize(line) {
+    const span = document.createElement('span');
+    const t = line.trim();
+    if (/^={3,}|^>>>\s+Result:|^---/.test(t)) span.className = 'log-heading';
+    else if (/PASSED|passed|✓|\bOK\b/.test(t) && !/FAILED/.test(t)) span.className = 'log-pass';
+    else if (/FAILED|ERROR|error:|Error:/.test(t)) span.className = 'log-fail';
+    else if (/WARN|warning:/i.test(t)) span.className = 'log-warn';
+    span.textContent = line + '\n';
+    return span;
+  }
+  function appendLine(line) {
+    lineTotal++;
+    logOutput.appendChild(colorize(line));
+    lineCount.textContent = lineTotal + ' line' + (lineTotal === 1 ? '' : 's');
+    if (autoScroll) logOutput.scrollTop = logOutput.scrollHeight;
+  }
+  logOutput.addEventListener('scroll', () => {
+    autoScroll = logOutput.scrollHeight - logOutput.scrollTop - logOutput.clientHeight < 40;
+  });
+  function startElapsedTimer() {
+    stopElapsedTimer();
+    startedAt = Date.now();
+    elapsedBadge.style.display = 'inline';
+    elapsedTimer = setInterval(() => {
+      const s = Math.floor((Date.now() - startedAt) / 1000);
+      elapsedBadge.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }, 1000);
+  }
+  function stopElapsedTimer() { clearInterval(elapsedTimer); elapsedTimer = null; }
+  function setRunning(env, suite) {
+    statusDot.className = 'status-dot running';
+    statusText.textContent = 'Running…';
+    statusDetail.textContent = SUITE_LABELS[suite] + ' on ' + ENV_LABELS[env];
+    envSelect.disabled = suiteSelect.disabled = true;
+    btnRun.disabled = true; btnStop.disabled = false;
+    progressFill.className = 'indeterminate';
+    progressFill.style.width = '';
+    startElapsedTimer();
+  }
+  function setDone(exitCode) {
+    currentRunId = null;
+    const passed = exitCode === 0;
+    statusDot.className = passed ? 'status-dot passed' : 'status-dot failed';
+    statusText.textContent = passed ? 'Passed' : 'Failed';
+    statusDetail.textContent = 'Exit code ' + exitCode;
+    envSelect.disabled = suiteSelect.disabled = false;
+    btnRun.disabled = false; btnStop.disabled = true;
+    progressFill.className = passed ? 'passed' : 'failed';
+    stopElapsedTimer();
+  }
+  function setIdle() {
+    currentRunId = null;
+    statusDot.className = 'status-dot';
+    statusText.textContent = 'Idle';
+    statusDetail.textContent = '';
+    envSelect.disabled = suiteSelect.disabled = false;
+    btnRun.disabled = false; btnStop.disabled = true;
+    progressFill.className = '';
+    progressFill.style.width = '0%';
+    elapsedBadge.style.display = 'none';
+    stopElapsedTimer();
+  }
+  async function startRun() {
+    let res;
+    try {
+      res = await fetch('/run', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ env: envSelect.value, suite: suiteSelect.value }) });
+    } catch { alert('Could not reach the test server.'); return; }
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Failed to start run'); return; }
+    currentRunId = data.run_id;
+    autoScroll = true;
+    setRunning(envSelect.value, suiteSelect.value);
+    openStream(data.run_id);
+  }
+  function openStream(runId) {
+    if (eventSource) eventSource.close();
+    eventSource = new EventSource('/stream/' + runId);
+    eventSource.addEventListener('log', (e) => { appendLine(JSON.parse(e.data).line); });
+    eventSource.addEventListener('done', (e) => {
+      const payload = JSON.parse(e.data);
+      eventSource.close();
+      eventSource = null;
+      setDone(payload.exit_code == null ? 1 : payload.exit_code);
+    });
+    eventSource.onerror = () => {
+      if (eventSource) { eventSource.close(); eventSource = null; }
+      appendLine('[Connection lost]');
+      setIdle();
+    };
+  }
+  async function stopRun() {
+    if (currentRunId) await fetch('/stop/' + currentRunId, { method: 'POST' });
+  }
+  function clearLog() {
+    logOutput.innerHTML = '';
+    lineTotal = 0;
+    lineCount.textContent = '';
+    autoScroll = true;
+    if (btnStop.disabled) setIdle();
+  }
+  btnRun.addEventListener('click', startRun);
+  btnStop.addEventListener('click', stopRun);
+  btnClear.addEventListener('click', clearLog);
+  (async () => {
+    try {
+      const res = await fetch('/status');
+      const data = await res.json();
+      if (data.status === 'running' && data.run_id) {
+        currentRunId = data.run_id;
+        if (data.env) envSelect.value = data.env;
+        if (data.suite) suiteSelect.value = data.suite;
+        setRunning(data.env || 'qa', data.suite || 'dcc_contract');
+        openStream(data.run_id);
+        appendLine('[Reconnected…]');
+      }
+    } catch {}
+  })();
+</script>
+</body>
+</html>
