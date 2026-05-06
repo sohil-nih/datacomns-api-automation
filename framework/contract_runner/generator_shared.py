@@ -1,5 +1,10 @@
-"""Shared OpenAPI helpers used by ``dcc_generator`` (no STS-specific case generation)."""
+"""
+Shared OpenAPI parsing helpers for DCC case generation.
 
+Extracts path/query parameters, response codes, and 200 JSON schema ref names from each
+operation. ``_iter_ops`` drives the main loop in ``dcc_generator``; ``_fill_path_template``
+substitutes path params and normalizes against ``/api/v1``.
+"""
 from __future__ import annotations
 
 from urllib.parse import quote
@@ -8,21 +13,25 @@ from .loader import get_paths, normalize_path_for_base
 
 
 def _path_params_from_spec(operation: dict) -> list[dict]:
+    """Parameters with ``in: path`` for this operation."""
     params = operation.get("parameters") or []
     return [p for p in params if isinstance(p, dict) and p.get("in") == "path"]
 
 
 def _query_params_from_spec(operation: dict) -> list[dict]:
+    """Parameters with ``in: query`` (e.g. ``page``, ``per_page``)."""
     params = operation.get("parameters") or []
     return [p for p in params if isinstance(p, dict) and p.get("in") == "query"]
 
 
 def _response_codes(operation: dict) -> set[int]:
+    """Numeric HTTP status codes declared under ``operation.responses``."""
     responses = operation.get("responses") or {}
     return {int(k) for k in responses if str(k).isdigit()}
 
 
 def _fill_path_template(template: str, path_param_values: dict[str, str], base_path: str = "/v2") -> str:
+    """Replace ``{name}`` placeholders with encoded values, then strip ``base_path`` prefix."""
     path = template
     for key, value in path_param_values.items():
         path = path.replace("{" + key + "}", quote(str(value), safe=""))
@@ -30,6 +39,11 @@ def _fill_path_template(template: str, path_param_values: dict[str, str], base_p
 
 
 def _get_schema_ref(operation: dict) -> str | None:
+    """
+    Short schema name from the 200 response ``application/json`` schema ``$ref`` (or first ``anyOf``).
+
+    Used only for coarse body checks in the functional runner (not full JSON Schema validation).
+    """
     responses = operation.get("responses") or {}
     r200 = responses.get("200") or responses.get(200)
     if not r200 or not isinstance(r200, dict):
@@ -51,6 +65,7 @@ def _get_schema_ref(operation: dict) -> str | None:
 
 
 def _negative_path_params(path_template: str, path_params: list[dict], test_data: dict) -> dict | None:
+    """Path param dict where every segment is a fixed invalid string (for negative URL cases)."""
     if not path_params:
         return {}
     invalid = "invalid_nonexistent_xyz"
@@ -64,6 +79,11 @@ def _negative_path_params(path_template: str, path_params: list[dict], test_data
 
 
 def _iter_ops(spec: dict, tag_filter: list[str] | None):
+    """
+    Yield ``(path_template, method, operation_dict)`` for each HTTP operation in the spec.
+
+    Optional ``tag_filter`` restricts to operations tagged with at least one listed tag.
+    """
     paths = get_paths(spec)
     for path_template, path_item in paths.items():
         if not isinstance(path_item, dict):

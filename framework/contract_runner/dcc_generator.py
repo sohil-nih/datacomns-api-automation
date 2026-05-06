@@ -1,5 +1,12 @@
 """
-OpenAPI-driven test case generation for the DCC API.
+OpenAPI-driven GET case generation for the DCC REST API.
+
+Walks the spec (``_iter_ops``), keeps **GET** only, and builds case dicts with ``path``,
+``params``, ``expected_status``, ``operation_id``, ``summary``, ``tag``, ``negative``,
+and optional pagination / schema-ref metadata consumed by ``run_functional_tests_dcc``.
+
+Positive paths need ``test_data`` from ``discover_dcc``. Negative path cases use garbage
+segments; bad-query cases assume live DCC returns **400** for invalid ``page`` / ``per_page``.
 """
 from __future__ import annotations
 
@@ -17,6 +24,7 @@ BASE_PATH_DCC = "/api/v1"
 
 
 def _schema_type_set(schema: dict) -> set[str]:
+    """Collect JSON Schema ``type`` strings, unwrapping one level of ``anyOf`` / ``oneOf``."""
     out: set[str] = set()
     if not schema or not isinstance(schema, dict):
         return out
@@ -37,10 +45,12 @@ def _schema_type_set(schema: dict) -> set[str]:
 
 
 def _schema_has_integer(schema: dict) -> bool:
+    """True if the schema allows integer (including via ``anyOf``)."""
     return "integer" in _schema_type_set(schema)
 
 
 def _default_query_params_dcc(query_params: list[dict]) -> dict:
+    """Defaults for list operations: honor ``default``, integer ``page``/``per_page``/``skip``, booleans."""
     out: dict = {}
     for p in query_params:
         name = p.get("name")
@@ -67,6 +77,7 @@ def _default_query_params_dcc(query_params: list[dict]) -> dict:
 
 
 def _integer_page_per_page_names(query_params: list[dict]) -> set[str]:
+    """Names ``page`` / ``per_page`` that are typed as integers in the spec."""
     out: set[str] = set()
     for p in query_params:
         if not isinstance(p, dict):
@@ -80,11 +91,19 @@ def _integer_page_per_page_names(query_params: list[dict]) -> set[str]:
 
 
 def _has_page_and_per_page(query_params: list[dict]) -> bool:
+    """True if both integer ``page`` and ``per_page`` exist (enables pagination extras)."""
     names = _integer_page_per_page_names(query_params)
     return "page" in names and "per_page" in names
 
 
 def _resolve_path_params_dcc(path_template: str, path_params: list[dict], test_data: dict) -> dict | None:
+    """
+    Map ``discover_dcc`` keys to path parameter names, disambiguating by path shape.
+
+    Handles ``field``, ``organization``, ``namespace``, ``name`` for subject/sample/file
+    and organization-detail routes. Returns None if any required value is missing or
+    an unknown path param appears.
+    """
     if not path_params:
         return {}
     pt = path_template
@@ -150,6 +169,11 @@ def _resolve_path_params_dcc(path_template: str, path_params: list[dict], test_d
 
 
 def _expected_invalid_path_status_dcc(path_template: str, response_codes: set[int]) -> int:
+    """
+    HTTP status expected when all path segments are invalid (DCC live behavior vs strict OpenAPI).
+
+    Several templates are treated as **400** where the spec might list 404/422 only.
+    """
     pt = path_template.rstrip("/")
     if "/by/" in pt and pt.endswith("/count") and 400 in response_codes:
         return 400
@@ -173,6 +197,7 @@ def _expected_invalid_path_status_dcc(path_template: str, response_codes: set[in
 
 
 def _expected_bad_query_status_dcc() -> int:
+    """Live DCC returns 400 for out-of-range ``page`` / ``per_page`` in many list routes."""
     return 400
 
 
@@ -183,6 +208,19 @@ def generate_cases_dcc(
     tag_filter: list[str] | None = None,
     include_negative: bool = True,
 ) -> list[dict]:
+    """
+    Produce GET contract cases: positive 200s, optional pagination check, bad query, invalid path.
+
+    Args:
+        spec: Parsed OpenAPI document.
+        test_data: Output of ``discover_dcc`` (may be empty).
+        base_path: Prefix stripped from spec paths (default ``/api/v1``).
+        tag_filter: If set, only operations whose ``tags`` overlap this list.
+        include_negative: If False, skip bad-query and invalid-path cases.
+
+    Returns:
+        List of case dicts for the functional runner.
+    """
     cases: list[dict] = []
 
     for path_template, method, op in _iter_ops(spec, tag_filter):

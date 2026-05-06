@@ -1,5 +1,11 @@
 """
-Live discovery for the DCC API: subjects, samples, files, organizations.
+Live DCC API discovery for OpenAPI-driven contract tests.
+
+Calls list endpoints (``/subject``, ``/sample``, ``/file``, ``/organization``) to collect
+real ``organization``, ``namespace``, entity ``name`` values and canned ``field`` keys for
+count-by routes. Output is merged into ``test_data`` passed to ``generate_cases_dcc``.
+If the first ``/subject`` call fails or returns empty ``data``, returns an empty dict and
+few generated cases can be built.
 """
 from __future__ import annotations
 
@@ -7,6 +13,7 @@ from framework.contract_runner.client import ContractAPIClient
 
 
 def _entity_triple(record: dict) -> tuple[str, str, str] | None:
+    """Extract (organization, namespace_name, entity_name) from a list row's nested ``id`` object."""
     id_ = record.get("id")
     if not isinstance(id_, dict):
         return None
@@ -23,10 +30,15 @@ def _entity_triple(record: dict) -> tuple[str, str, str] | None:
 
 def discover_dcc(client: ContractAPIClient) -> dict:
     """
-    Populate path/query inputs for ``generate_cases_dcc``.
+    Build a dict of path-parameter values for positive generated cases.
 
-    Expects ``client.base_url`` to end with ``/api/v1`` so paths are rooted at
-    ``/subject``, ``/sample``, etc.
+    Requires ``client.base_url`` to include the API prefix (e.g. ends with ``/api/v1``).
+    Paths used: ``GET /subject``, ``GET /sample``, ``GET /file``, ``GET /organization``.
+
+    Returns:
+        Keys such as ``organization``, ``namespace``, ``dcc_subject_name``, sample/file
+        triples, ``dcc_organization_name``, and fixed count-field strings for ``/by/`` routes.
+        Empty dict if discovery cannot read at least one subject row.
     """
     data: dict = {}
     list_params = {"page": 1, "per_page": 10}

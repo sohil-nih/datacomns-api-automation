@@ -1,1 +1,1 @@
-"""Functional and performance HTTP runners for contract tests."""
+"""Expose contract runner HTTP execution: ``runners.functional`` and ``runners.performance``."""

@@ -1,5 +1,11 @@
 """
-Functional runner: for each generated case, GET the path and compare status to ``expected_status``.
+Execute generated contract cases as **functional** GETs.
+
+For each case dict from ``generate_cases_dcc``, calls ``ContractAPIClient.get`` (or the
+pagination-pair path when ``pagination_pair_assert`` is set), compares the HTTP status to
+``expected_status``, and optionally validates response shape (JSON equality, pagination limits,
+OpenAPI-derived ``response_schema_ref``, or DCC-specific skips). Results are flat dicts suitable
+for ``aggregate_results`` and HTML/JSON reporters.
 """
 from __future__ import annotations
 
@@ -12,6 +18,7 @@ _TERMS_NO_VALUE_SET_DETAIL = "Property exists, but does not use an acceptable va
 
 
 def _is_acceptable_terms_no_value_set_404(path: str, response: APIResponse) -> bool:
+    """True when ``/terms`` or ``/terms/count`` returns 404 with the known *no value set* detail."""
     path_no_query = path.split("?")[0].rstrip("/")
     if not (path_no_query.endswith("/terms") or path_no_query.endswith("/terms/count")):
         return False
@@ -22,6 +29,7 @@ def _is_acceptable_terms_no_value_set_404(path: str, response: APIResponse) -> b
 
 
 def _special_expected_terms_404_error(response: APIResponse) -> str:
+    """Human-readable message when a terms 404 is treated as an acceptable pass."""
     if response.body:
         return f"Special expected 404: {response.body}"
     return (
@@ -32,6 +40,8 @@ def _special_expected_terms_404_error(response: APIResponse) -> str:
 
 @dataclass(frozen=True)
 class PaginationPairOutcome:
+    """Outcome of a two-request pagination consistency check (params A vs B on the same path)."""
+
     ok: bool
     error: str | None
     duration_total: float
@@ -42,6 +52,7 @@ class PaginationPairOutcome:
 
 
 def _pagination_pair_check(client: ContractAPIClient, case: dict) -> PaginationPairOutcome:
+    """Run GET with ``pagination_pair_params_a`` then ``_b``; assert B[0] == A[1] when A has >=2 items."""
     path = case.get("path") or ""
     params_a = case.get("pagination_pair_params_a")
     params_b = case.get("pagination_pair_params_b")
@@ -154,6 +165,7 @@ def _pagination_pair_check(client: ContractAPIClient, case: dict) -> PaginationP
 
 
 def _path_with_query(path: str, params: dict | None) -> str:
+    """Append serialized query string to ``path`` for display (uses shared query builder)."""
     return path + _build_query_string(params)
 
 
@@ -163,6 +175,13 @@ def run_functional_tests(
     on_case_done: Callable[[dict], None] | None = None,
     perf_threshold_ms: int | None = None,
 ) -> list[dict]:
+    """Run all cases; each result dict includes ``operation_id``, ``path``/``path_display``, ``passed``, ``duration``, ``perf_warning``.
+
+    Case keys used: ``path``, ``params``, ``expected_status``, ``operation_id``, ``summary``,
+    ``tag``, ``negative``, ``pagination_pair_assert``, ``pagination_pair_params_a``/``_b``,
+    ``expected_json``, ``skip_oob_assert``, ``pagination_assert_max_items``,
+    ``pagination_list_key``, ``response_schema_ref``.
+    """
     results = []
     for case in cases:
         path = case.get("path") or ""
@@ -280,10 +299,12 @@ def run_functional_tests_dcc(
     cases: list[dict],
     on_case_done: Callable[[dict], None] | None = None,
 ) -> list[dict]:
+    """DCC entrypoint; same as ``run_functional_tests`` without a perf threshold (CLI sets threshold there)."""
     return run_functional_tests(client, cases, on_case_done=on_case_done)
 
 
 def _check_basic_shape(response: APIResponse, case: dict) -> tuple[bool, str | None]:
+    """Validate body when status expectations are met: exact JSON, list length, or schema-ref coarse shape."""
     data = response.json()
     if case.get("expected_json") is not None:
         exp = case["expected_json"]
@@ -347,9 +368,11 @@ def _check_basic_shape(response: APIResponse, case: dict) -> tuple[bool, str | N
 
 
 def check_response_body_for_case(response: APIResponse, case: dict) -> tuple[bool, str | None]:
+    """Public wrapper around ``_check_basic_shape`` for reuse outside the main loop."""
     return _check_basic_shape(response, case)
 
 
 def check_pagination_pair_for_case(client: ContractAPIClient, case: dict) -> tuple[bool, str | None]:
+    """Return (ok, error) for a single case's pagination pair assertion."""
     out = _pagination_pair_check(client, case)
     return out.ok, out.error

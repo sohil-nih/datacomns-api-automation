@@ -1,5 +1,8 @@
 """
-Generate a static HTML table for contract test results.
+Static **HTML** report for functional contract runs: one table row per case plus summary blocks.
+
+``write_html_report`` is generic; ``write_html_report_dcc`` sets the DCC title and delegates to it.
+Discovery and case-generation metadata can be rendered in the header when provided.
 """
 from pathlib import Path
 from datetime import datetime
@@ -7,6 +10,7 @@ from urllib.parse import urlparse
 
 
 def _environment_label(host_or_env: str) -> str:
+    """Map host string or env name to a short QA/Stage/Prod label for the report header."""
     s = (host_or_env or "").lower()
     if "qa" in s:
         return "QA"
@@ -28,6 +32,7 @@ def write_html_report_dcc(
     discovery_info: dict | None = None,
     cases_generated: dict | None = None,
 ) -> None:
+    """Emit the CCDI Data Commons (DCC) titled HTML report (thin wrapper over ``write_html_report``)."""
     write_html_report(
         summary,
         results,
@@ -54,6 +59,7 @@ def write_html_report(
     discovery_info: dict | None = None,
     cases_generated: dict | None = None,
 ) -> None:
+    """Write a self-contained HTML file from ``aggregate_results`` output and per-case result dicts."""
     path = Path(out_path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -111,6 +117,7 @@ def _template(
     discovery_info: dict | None = None,
     cases_generated: dict | None = None,
 ) -> str:
+    """Assemble the full HTML document string (inline CSS, summary, perf block, results table)."""
     total = summary.get("total", 0)
     passed = summary.get("passed", 0)
     failed = summary.get("failed", 0)
@@ -264,6 +271,7 @@ def _template(
 
 
 def _esc(s: str) -> str:
+    """Escape text for safe insertion into HTML."""
     if not s:
         return ""
     return (

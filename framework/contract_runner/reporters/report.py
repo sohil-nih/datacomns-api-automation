@@ -1,11 +1,19 @@
 """
-Roll up per-case results into summary stats and emit machine-readable JSON reports.
+Summarize functional run results and write a combined **summary + results** JSON artifact.
+
+``aggregate_results`` consumes the list of per-case dicts from ``run_functional_tests`` (or DCC
+wrapper); ``write_json_report`` persists both the rollup and raw rows for CI or dashboards.
 """
 import statistics
 from pathlib import Path
 
 
 def aggregate_results(results: list[dict], perf_threshold_ms: int | None = None) -> dict:
+    """Build pass/fail totals, per-tag counts, last row per operation, latency percentiles, and slow-request list.
+
+    Input rows match functional runner output: ``passed``, ``duration`` (seconds), ``tag``,
+    ``operation_id``, ``path`` or ``path_display``, ``error``.
+    """
     total = len(results)
     passed = sum(1 for r in results if r.get("passed"))
     failed = total - passed
@@ -69,6 +77,7 @@ def aggregate_results(results: list[dict], perf_threshold_ms: int | None = None)
 
 
 def write_json_report(summary: dict, results: list[dict], out_path: str | Path) -> None:
+    """Write ``{"summary": ..., "results": ...}`` JSON to ``out_path``, creating parent dirs as needed."""
     path = Path(out_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {"summary": summary, "results": results}

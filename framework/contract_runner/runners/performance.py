@@ -1,5 +1,9 @@
 """
-Concurrent performance runner for generated contract cases.
+Concurrent **performance** load for generated contract cases.
+
+Uses ``ThreadPoolExecutor`` to issue GETs for **non-negative** cases only, collects per-request
+``PerfResult`` rows, then rolls up ``PerfStats`` (latency percentiles, throughput, per-endpoint
+stats). Pair with ``reporters.perf_report`` for JSON/HTML output.
 """
 from __future__ import annotations
 
@@ -15,6 +19,8 @@ from framework.contract_runner.client import ContractAPIClient
 
 @dataclass
 class PerfResult:
+    """One timed HTTP GET during a perf run (status 0 means client/executor failure)."""
+
     operation_id: str
     path: str
     iteration: int
@@ -24,11 +30,14 @@ class PerfResult:
 
     @property
     def is_error(self) -> bool:
+        """Treat missing response (0) or 5xx as an error for aggregates."""
         return self.status_code == 0 or self.status_code >= 500
 
 
 @dataclass
 class EndpointStats:
+    """Aggregated latency and error counts for one ``operation_id``."""
+
     operation_id: str
     count: int
     error_count: int
@@ -43,6 +52,8 @@ class EndpointStats:
 
 @dataclass
 class PerfStats:
+    """Run-level rollup: wall time, global percentiles, slowest samples, and per-endpoint breakdown."""
+
     total_requests: int
     error_count: int
     error_rate_pct: float
@@ -64,6 +75,7 @@ class PerfStats:
 
 
 def _percentile(sorted_values: list[float], pct: float) -> float | None:
+    """Nearest-rank percentile on a pre-sorted duration list (``pct`` in 0..1)."""
     if not sorted_values:
         return None
     idx = min(int(len(sorted_values) * pct), len(sorted_values) - 1)
@@ -71,6 +83,7 @@ def _percentile(sorted_values: list[float], pct: float) -> float | None:
 
 
 def _endpoint_stats(op_id: str, results: list[PerfResult]) -> EndpointStats:
+    """Compute min/avg/max and percentile latencies for results sharing one operation id."""
     durations = sorted(r.duration_ms for r in results)
     errors = sum(1 for r in results if r.is_error)
     return EndpointStats(
@@ -96,6 +109,10 @@ def run_perf_tests(
     perf_threshold_ms: int = 2000,
     on_request_done: Callable[[PerfResult], None] | None = None,
 ) -> tuple[list[PerfResult], PerfStats]:
+    """Execute ``iterations`` round(s) of GETs per positive case with optional staggered ramp-up.
+
+    Case keys used: ``path``, ``params``, ``operation_id``, ``negative`` (skipped when true).
+    """
     positive_cases = [c for c in cases if not c.get("negative", False)]
     if not positive_cases:
         empty_stats = PerfStats(

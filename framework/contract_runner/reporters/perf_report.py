@@ -1,5 +1,8 @@
 """
-Performance report writers: JSON and HTML for ``run_perf_tests`` output.
+**Performance** report writers: serialize ``run_perf_tests`` output to JSON and a standalone HTML page.
+
+JSON includes a summary block, per-endpoint aggregates, slowest 10, and the full raw result list.
+HTML adds latency cards, a histogram, and sortable-style tables for operators.
 """
 from __future__ import annotations
 
@@ -17,6 +20,7 @@ def write_perf_json_report(
     raw_results: list["PerfResult"],
     out_path: str | Path,
 ) -> None:
+    """Write structured perf JSON (summary, by_endpoint, slowest_10, raw_results) to ``out_path``."""
     path = Path(out_path)
     path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -91,6 +95,7 @@ def write_perf_html_report(
     model_version: str | None = None,
     title: str = "API Performance Report",
 ) -> None:
+    """Emit a self-contained HTML performance report with histogram and endpoint table."""
     path = Path(out_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     html = _perf_template(
@@ -105,12 +110,14 @@ def write_perf_html_report(
 
 
 def _fmt(value: float | None, unit: str = "ms") -> str:
+    """Format a numeric latency for display (or ``N/A``)."""
     if value is None:
         return "N/A"
     return f"{value:,.2f} {unit}"
 
 
 def _esc(s: str) -> str:
+    """Escape text for safe insertion into HTML."""
     if not s:
         return ""
     return (
@@ -123,6 +130,7 @@ def _esc(s: str) -> str:
 
 
 def _latency_histogram(raw_results: list["PerfResult"]) -> str:
+    """Build a simple bucketed bar chart (HTML table) from raw duration_ms values."""
     buckets = [
         ("0–100 ms", 0, 100),
         ("100–500 ms", 100, 500),
@@ -166,6 +174,7 @@ def _perf_template(
     model_version: str | None = None,
     title: str = "API Performance Report",
 ) -> str:
+    """Assemble the full perf HTML document (cards, histogram, endpoint and slowest tables)."""
     generated = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
     meta_parts = []

@@ -20,6 +20,11 @@ except ImportError:
 
 
 def main_dcc_perf() -> None:
+    """Load spec + discovery, run concurrent GET perf on positive cases only, emit perf JSON/HTML.
+
+    Optionally fails when ``--fail-on-error-rate`` is exceeded. Uses ``DCC_PERF_REPORT_DIR`` when
+    ``--report`` is omitted.
+    """
     import argparse
 
     from framework.config.loader import get_project_config
@@ -103,6 +108,7 @@ def main_dcc_perf() -> None:
     completed = [0]
 
     def _on_done(result) -> None:
+        """Progress callback: print every 50 completions (and the last) for long runs."""
         completed[0] += 1
         if completed[0] % 50 == 0 or completed[0] == total_work:
             print(f"  {completed[0]}/{total_work} requests done...", flush=True)

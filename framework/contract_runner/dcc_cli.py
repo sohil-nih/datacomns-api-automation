@@ -25,6 +25,10 @@ except ImportError:
 
 
 def main_dcc() -> None:
+    """Parse argv, discover live ids, generate cases from the OpenAPI spec, run GETs, write JSON+HTML reports.
+
+    Exit code 1 if any case fails; 0 if all pass. Honors ``DCC_CONTRACT_REPORT_DIR`` and optional ``.env``.
+    """
     import argparse
 
     from framework.contract_runner.client import ContractAPIClient

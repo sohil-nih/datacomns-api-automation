@@ -1,7 +1,14 @@
 """
-Datacomns API Test Runner — Flask backend.
+Datacomns API Test Runner — **Flask** backend for the local web UI.
 
-Runs DCC contract/perf CLIs and optional pytest DCC suites via subprocess + SSE stream.
+**Flow:** POST ``/run`` starts a subprocess (DCC contract CLI, perf CLI, or pytest) with
+``DATACOMNS_DCC_BASE_URL`` set from ``ENVIRONMENTS``. The UI reads **Server-Sent Events** from
+``/stream/<run_id>`` for live logs; ``/status`` exposes coarse state; POST ``/stop/<run_id>`` sends
+SIGTERM to the process group.
+
+``ENVIRONMENTS`` maps short keys (qa/stage/prod) to DCC API **host** URLs only — path prefix
+comes from ``config/projects.yaml`` / ``ContractAPIClient``. ``SUITES`` maps UI suite ids to argv
+vectors (``python -m`` …).
 """
 from __future__ import annotations
 
@@ -52,6 +59,7 @@ SUITES: dict[str, list[str]] = {
 
 app = Flask(__name__)
 
+# In-memory coordinator for at most one run: protected by _state["lock"].
 _state: dict = {
     "run_id": None,
     "status": "idle",
@@ -69,11 +77,13 @@ _state: dict = {
 
 @app.route("/")
 def index():
+    """Serve the main HTML shell (``templates/index.html``)."""
     return render_template("index.html")
 
 
 @app.route("/status")
 def status():
+    """JSON snapshot: run status, ids, suite/env keys, elapsed seconds, and progress ``stage``."""
     with _state["lock"]:
         elapsed = None
         if _state["started_at"] is not None:
@@ -92,6 +102,7 @@ def status():
 
 @app.route("/run", methods=["POST"])
 def run():
+    """Start a suite if idle: JSON body ``env`` + ``suite``; returns ``run_id``. 409 if already running."""
     body = request.get_json(force=True, silent=True) or {}
     env_key = body.get("env", "qa")
     suite_key = body.get("suite", "dcc_contract")
@@ -150,6 +161,7 @@ def run():
 
 @app.route("/stream/<run_id>")
 def stream(run_id: str):
+    """SSE stream of log lines as ``event: log``; final ``event: done`` with exit code (or stale marker)."""
     def generate():
         with _state["lock"]:
             current_id = _state["run_id"]
@@ -184,6 +196,7 @@ def stream(run_id: str):
 
 @app.route("/stop/<run_id>", methods=["POST"])
 def stop(run_id: str):
+    """Send SIGTERM to the run's process group (best-effort); no-op if run id mismatches or not running."""
     with _state["lock"]:
         if _state["run_id"] != run_id:
             return jsonify({"error": "Run ID not found"}), 404
@@ -206,6 +219,7 @@ def stop(run_id: str):
 
 
 def _drain_process(process: subprocess.Popen, q: queue.Queue, run_id: str, suite_key: str) -> None:
+    """Background worker: push stdout lines to ``q``, wait for exit, then finalize ``_state`` and push ``None``."""
     try:
         for line in process.stdout:  # type: ignore[union-attr]
             q.put(line.rstrip("\n"))
@@ -222,4 +236,5 @@ def _drain_process(process: subprocess.Popen, q: queue.Queue, run_id: str, suite
 
 
 def _sse_event(event: str, data: str) -> str:
+    """Format one Server-Sent Event frame (``event`` + ``data`` lines, blank line terminator)."""
     return f"event: {event}\ndata: {data}\n\n"
