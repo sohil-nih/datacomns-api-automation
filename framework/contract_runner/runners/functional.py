@@ -4,7 +4,7 @@ Execute generated contract cases as **functional** GETs.
 For each case dict from ``generate_cases_dcc``, calls ``ContractAPIClient.get`` (or the
 pagination-pair path when ``pagination_pair_assert`` is set), compares the HTTP status to
 ``expected_status``, and optionally validates response shape (JSON equality, pagination limits,
-OpenAPI-derived ``response_schema_ref``, or DCC-specific skips). Results are flat dicts suitable
+OpenAPI-derived ``response_schema_ref``). Results are flat dicts suitable
 for ``aggregate_results`` and HTML/JSON reporters.
 """
 from __future__ import annotations
@@ -13,30 +13,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from framework.contract_runner.client import APIResponse, ContractAPIClient, _build_query_string
-
-_TERMS_NO_VALUE_SET_DETAIL = "Property exists, but does not use an acceptable value set."
-
-
-def _is_acceptable_terms_no_value_set_404(path: str, response: APIResponse) -> bool:
-    """True when ``/terms`` or ``/terms/count`` returns 404 with the known *no value set* detail."""
-    path_no_query = path.split("?")[0].rstrip("/")
-    if not (path_no_query.endswith("/terms") or path_no_query.endswith("/terms/count")):
-        return False
-    if response.status_code != 404:
-        return False
-    data = response.json()
-    return isinstance(data, dict) and data.get("detail") == _TERMS_NO_VALUE_SET_DETAIL
-
-
-def _special_expected_terms_404_error(response: APIResponse) -> str:
-    """Human-readable message when a terms 404 is treated as an acceptable pass."""
-    if response.body:
-        return f"Special expected 404: {response.body}"
-    return (
-        "Acceptable 404 but response body was empty without detail message — "
-        "unexpected; please investigate."
-    )
-
+from framework.contract_runner.dcc_filter_extract import filter_candidates_from_row, filter_match_mode
 
 @dataclass(frozen=True)
 class PaginationPairOutcome:
@@ -70,16 +47,6 @@ def _pagination_pair_check(client: ContractAPIClient, case: dict) -> PaginationP
     resp_a = client.get(path, params_a)
     dur_a = resp_a.duration
     if resp_a.status_code != 200:
-        if _is_acceptable_terms_no_value_set_404(path, resp_a):
-            return PaginationPairOutcome(
-                ok=True,
-                error=_special_expected_terms_404_error(resp_a),
-                duration_total=dur_a,
-                actual_status=resp_a.status_code,
-                b_executed=False,
-                duration_a=dur_a,
-                duration_b=0.0,
-            )
         return PaginationPairOutcome(
             ok=False,
             error=(
@@ -109,16 +76,6 @@ def _pagination_pair_check(client: ContractAPIClient, case: dict) -> PaginationP
     dur_b = resp_b.duration
     dur_total = dur_a + dur_b
     if resp_b.status_code != 200:
-        if _is_acceptable_terms_no_value_set_404(path, resp_b):
-            return PaginationPairOutcome(
-                ok=True,
-                error=_special_expected_terms_404_error(resp_b),
-                duration_total=dur_total,
-                actual_status=resp_b.status_code,
-                b_executed=True,
-                duration_a=dur_a,
-                duration_b=dur_b,
-            )
         return PaginationPairOutcome(
             ok=False,
             error=(
@@ -180,7 +137,8 @@ def run_functional_tests(
     Case keys used: ``path``, ``params``, ``expected_status``, ``operation_id``, ``summary``,
     ``tag``, ``negative``, ``pagination_pair_assert``, ``pagination_pair_params_a``/``_b``,
     ``expected_json``, ``skip_oob_assert``, ``pagination_assert_max_items``,
-    ``pagination_list_key``, ``response_schema_ref``, ``expect_non_empty_data``.
+    ``pagination_list_key``, ``response_schema_ref``, ``expect_non_empty_data``,
+    ``filter_resource``, ``filter_param``, ``filter_value``.
     """
     results = []
     for case in cases:
@@ -201,15 +159,9 @@ def run_functional_tests(
                 path_display = path_b
                 display_duration = pair_out.duration_b
             elif pair_out.ok:
-                err = pair_out.error or ""
-                if err.startswith("Special expected 404"):
-                    path_display = path_a
-                    display_duration = pair_out.duration_a
-                    display_note = None
-                else:
-                    path_display = path_b
-                    display_duration = pair_out.duration_a
-                    display_note = "B not run (A had <2 items)"
+                path_display = path_b
+                display_duration = pair_out.duration_a
+                display_note = "B not run (A had <2 items)"
             else:
                 path_display = path_a
                 display_duration = pair_out.duration_a
@@ -251,10 +203,6 @@ def run_functional_tests(
             error = f"Expected {expected_status}, got {response.status_code}"
             if response.body:
                 error += f": {response.body[:200]}"
-            if expected_status == 200 and response.status_code == 404:
-                if _is_acceptable_terms_no_value_set_404(path, response):
-                    passed = True
-                    error = _special_expected_terms_404_error(response)
 
         if passed and (
             expected_status == 200
@@ -267,6 +215,13 @@ def run_functional_tests(
             if not shape_ok:
                 passed = False
                 error = shape_error
+        semantic_note = None
+        if passed and expected_status == 200 and case.get("filter_param"):
+            sem_ok, sem_err, sem_note = _check_filter_semantics(response, case)
+            if not sem_ok:
+                passed = False
+                error = sem_err
+            semantic_note = sem_note
 
         path_display = _path_with_query(path, params)
         perf_warning = (
@@ -289,6 +244,8 @@ def run_functional_tests(
             "negative": case.get("negative", False),
             "perf_warning": perf_warning,
         }
+        if semantic_note:
+            result["semantic_note"] = semantic_note
         results.append(result)
         if on_case_done:
             on_case_done(result)
@@ -372,6 +329,61 @@ def _check_basic_shape(response: APIResponse, case: dict) -> tuple[bool, str | N
     if isinstance(data, int):
         return True, None
     return True, None
+
+
+def _value_matches(expected: str, candidate: str, mode: str) -> bool:
+    exp = str(expected).strip().lower()
+    got = str(candidate).strip().lower()
+    if mode == "contains_ci":
+        return exp in got
+    return got == exp
+
+
+def _check_filter_semantics(response: APIResponse, case: dict) -> tuple[bool, str | None, str | None]:
+    """
+    Best-effort semantic check for generated ``__filter_*`` list cases.
+
+    Returns:
+        (ok, error, note) where note is set for informative pass/skip situations.
+    """
+    data = response.json()
+    if not isinstance(data, dict):
+        return True, None, "semantic check skipped: response is not a JSON object"
+    rows = data.get("data")
+    if not isinstance(rows, list):
+        return True, None, "semantic check skipped: response has no data[] list"
+    if not rows:
+        return True, None, "semantic check passed: empty data[]"
+
+    resource = case.get("filter_resource")
+    param = case.get("filter_param")
+    expected = case.get("filter_value")
+    if not resource or not param or expected is None:
+        return True, None, "semantic check skipped: filter metadata missing"
+
+    mode = filter_match_mode(str(resource), str(param))
+    compared = 0
+    for idx, row in enumerate(rows):
+        if not isinstance(row, dict):
+            continue
+        candidates = filter_candidates_from_row(str(resource), row, str(param))
+        if not candidates:
+            continue
+        compared += 1
+        if not any(_value_matches(str(expected), c, mode) for c in candidates):
+            sample = candidates[:3]
+            return (
+                False,
+                (
+                    f"Filter semantic mismatch for {param}={expected!r} at data[{idx}] "
+                    f"(mode={mode}); row candidates={sample!r}"
+                ),
+                None,
+            )
+
+    if compared == 0:
+        return True, None, f"semantic check skipped: no row mapping for filter param {param!r}"
+    return True, None, f"semantic check passed: validated {compared} row(s)"
 
 
 def check_response_body_for_case(response: APIResponse, case: dict) -> tuple[bool, str | None]:

@@ -2,11 +2,24 @@
 Harvest concrete query-filter values from DCC list API rows for contract case generation.
 
 Maps ``metadata`` shapes returned by ``GET /subject``, ``GET /sample``, and ``GET /file``
-to OpenAPI query parameter names. Used only by ``discover_dcc`` (``filter_examples``).
+to OpenAPI query parameter names. Used by discovery (``filter_examples``) and filter
+semantic checks in the functional runner.
 """
 from __future__ import annotations
 
 from typing import Any, Callable
+
+_FILTER_MATCH_MODE: dict[str, dict[str, str]] = {
+    "subject": {
+        "associated_diagnosis_categories": "contains_ci",
+    },
+    "sample": {
+        "diagnosis": "contains_ci",
+    },
+    "file": {
+        "description": "contains_ci",
+    },
+}
 
 
 def _as_query_string(v: Any) -> str | None:
@@ -151,6 +164,122 @@ def _file_row_filters(meta: dict) -> dict[str, str]:
             fv = _as_query_string(fn.get("value"))
             if fv:
                 out["metadata.unharmonized.file_name"] = fv
+    return out
+
+
+def _metadata_from_row(row: dict) -> dict:
+    meta = row.get("metadata")
+    return meta if isinstance(meta, dict) else {}
+
+
+def filter_match_mode(resource: str, param: str) -> str:
+    """Match mode for semantic checks: ``exact_ci`` (default) or ``contains_ci``."""
+    return _FILTER_MATCH_MODE.get(resource, {}).get(param, "exact_ci")
+
+
+def filter_candidates_from_row(resource: str, row: dict, param: str) -> list[str]:
+    """
+    Candidate row values for a filter parameter.
+
+    Returns one or more normalized strings extracted from row ``metadata``.
+    Empty list means there is no known mapping/value for this row+param.
+    """
+    meta = _metadata_from_row(row)
+    out: list[str] = []
+    if not meta:
+        return out
+
+    def add(v: Any) -> None:
+        s = _as_query_string(v)
+        if s:
+            out.append(s)
+
+    if resource == "subject":
+        if param in ("sex", "ethnicity", "vital_status", "age_at_vital_status"):
+            add(_scalar_value(meta, param))
+        elif param == "race":
+            add(_first_list_item_value(meta, "race"))
+        elif param == "depositions":
+            deps = meta.get("depositions")
+            if isinstance(deps, list):
+                for d in deps:
+                    if isinstance(d, dict):
+                        add(d.get("value"))
+        elif param == "identifiers":
+            ident = meta.get("identifiers")
+            if isinstance(ident, list):
+                for i0 in ident:
+                    if isinstance(i0, dict):
+                        inner = i0.get("value")
+                        if isinstance(inner, dict):
+                            add(inner.get("name"))
+        elif param == "associated_diagnosis_categories":
+            cats = meta.get("associated_diagnosis_categories")
+            if isinstance(cats, list):
+                for c in cats:
+                    if isinstance(c, dict):
+                        add(c.get("value"))
+            elif isinstance(cats, dict):
+                add(cats.get("value"))
+    elif resource == "sample":
+        if param in (
+            "disease_phase",
+            "library_selection_method",
+            "library_strategy",
+            "library_source_material",
+            "preservation_method",
+            "tumor_grade",
+            "specimen_molecular_analyte_type",
+            "tissue_type",
+            "tumor_classification",
+            "diagnosis",
+            "tumor_tissue_morphology",
+            "age_at_diagnosis",
+            "age_at_collection",
+        ):
+            add(_scalar_value(meta, param))
+        elif param == "anatomical_sites":
+            vals = meta.get("anatomical_sites")
+            if isinstance(vals, list):
+                for v in vals:
+                    if isinstance(v, dict):
+                        add(v.get("value"))
+        elif param == "depositions":
+            deps = meta.get("depositions")
+            if isinstance(deps, list):
+                for d in deps:
+                    if isinstance(d, dict):
+                        add(d.get("value"))
+        elif param == "identifiers":
+            ident = meta.get("identifiers")
+            if isinstance(ident, list):
+                for i0 in ident:
+                    if isinstance(i0, dict):
+                        inner = i0.get("value")
+                        if isinstance(inner, dict):
+                            add(inner.get("name"))
+    elif resource == "file":
+        if param in ("type", "size", "description"):
+            add(_scalar_value(meta, param))
+        elif param == "checksums":
+            chk = meta.get("checksums")
+            if isinstance(chk, dict):
+                inner = chk.get("value")
+                if isinstance(inner, dict):
+                    add(inner.get("md5"))
+                    add(inner.get("checksum_value"))
+        elif param == "depositions":
+            deps = meta.get("depositions")
+            if isinstance(deps, list):
+                for d in deps:
+                    if isinstance(d, dict):
+                        add(d.get("value"))
+        elif param == "metadata.unharmonized.file_name":
+            unh = meta.get("unharmonized")
+            if isinstance(unh, dict):
+                fn = unh.get("file_name")
+                if isinstance(fn, dict):
+                    add(fn.get("value"))
     return out
 
 
