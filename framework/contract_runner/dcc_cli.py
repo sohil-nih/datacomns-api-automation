@@ -54,6 +54,11 @@ def main_dcc() -> None:
     )
     parser.add_argument("--tags", default=None, help="Comma-separated OpenAPI tags (default: all)")
     parser.add_argument("--no-negative", action="store_true", help="Skip negative test cases")
+    parser.add_argument(
+        "--strict-filter-data",
+        action="store_true",
+        help="Filter-driven list cases require non-empty data[] (stricter; may fail if env has sparse data)",
+    )
     parser.add_argument("--quiet", action="store_true", help="Minimal console output")
     args = parser.parse_args()
 
@@ -94,14 +99,25 @@ def main_dcc() -> None:
         parts = []
         for key in sorted(test_data.keys()):
             v = test_data[key]
-            disp = v[:17] + "..." if isinstance(v, str) and len(v) > 20 else v
+            if isinstance(v, dict):
+                disp = f"<dict {len(v)} keys>"
+            elif isinstance(v, str) and len(v) > 20:
+                disp = v[:17] + "..."
+            else:
+                disp = v
             parts.append(f"{key}={disp!r}")
             discovery_info[key] = v
         log(f"Discovery: {', '.join(parts)}")
     else:
         log("Discovery: no data (API unreachable or empty subject list).")
 
-    cases = generate_cases_dcc(spec, test_data, include_negative=not args.no_negative, tag_filter=tag_filter)
+    cases = generate_cases_dcc(
+        spec,
+        test_data,
+        include_negative=not args.no_negative,
+        tag_filter=tag_filter,
+        strict_non_empty_filter=args.strict_filter_data,
+    )
     if not cases:
         print("No test cases generated (check discovery and tag filter)", file=sys.stderr)
         sys.exit(0)

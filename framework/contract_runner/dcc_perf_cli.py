@@ -52,6 +52,11 @@ def main_dcc_perf() -> None:
         metavar="PCT",
         help="Exit 1 if HTTP error rate exceeds this percent",
     )
+    parser.add_argument(
+        "--strict-filter-data",
+        action="store_true",
+        help="Filter-driven list cases require non-empty data[] (same as contract CLI)",
+    )
     args = parser.parse_args()
 
     try:
@@ -83,7 +88,13 @@ def main_dcc_perf() -> None:
         )
         sys.exit(1)
 
-    cases = generate_cases_dcc(spec, test_data, include_negative=False, tag_filter=tag_filter)
+    cases = generate_cases_dcc(
+        spec,
+        test_data,
+        include_negative=False,
+        tag_filter=tag_filter,
+        strict_non_empty_filter=args.strict_filter_data,
+    )
     if not cases:
         print("No test cases generated.", file=sys.stderr)
         sys.exit(1)
