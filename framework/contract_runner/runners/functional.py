@@ -159,7 +159,7 @@ def run_functional_tests(
                 path_display = path_b
                 display_duration = pair_out.duration_b
             elif pair_out.ok:
-                path_display = path_b
+                path_display = path_a
                 display_duration = pair_out.duration_a
                 display_note = "B not run (A had <2 items)"
             else:

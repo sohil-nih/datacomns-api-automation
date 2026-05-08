@@ -15,6 +15,7 @@ _FILTER_MATCH_MODE: dict[str, dict[str, str]] = {
     },
     "sample": {
         "diagnosis": "contains_ci",
+        "diagnosis_category": "contains_ci",
     },
     "file": {
         "description": "contains_ci",
@@ -82,6 +83,17 @@ def _subject_row_filters(meta: dict) -> dict[str, str]:
                 name = _as_query_string(inner.get("name"))
                 if name:
                     out["identifiers"] = name
+    cats = meta.get("associated_diagnosis_categories")
+    if isinstance(cats, list) and cats:
+        c0 = cats[0]
+        if isinstance(c0, dict):
+            cv = _as_query_string(c0.get("value"))
+            if cv:
+                out["associated_diagnosis_categories"] = cv
+    elif isinstance(cats, dict):
+        cv = _as_query_string(cats.get("value"))
+        if cv:
+            out["associated_diagnosis_categories"] = cv
     return out
 
 
@@ -128,6 +140,17 @@ def _sample_row_filters(meta: dict) -> dict[str, str]:
                 name = _as_query_string(inner.get("name"))
                 if name:
                     out["identifiers"] = name
+    dcat = meta.get("diagnosis_category")
+    if isinstance(dcat, list) and dcat:
+        c0 = dcat[0]
+        if isinstance(c0, dict):
+            dv = _as_query_string(c0.get("value"))
+            if dv:
+                out["diagnosis_category"] = dv
+    elif isinstance(dcat, dict):
+        dv = _as_query_string(dcat.get("value"))
+        if dv:
+            out["diagnosis_category"] = dv
     return out
 
 
@@ -258,6 +281,14 @@ def filter_candidates_from_row(resource: str, row: dict, param: str) -> list[str
                         inner = i0.get("value")
                         if isinstance(inner, dict):
                             add(inner.get("name"))
+        elif param == "diagnosis_category":
+            vals = meta.get("diagnosis_category")
+            if isinstance(vals, list):
+                for v in vals:
+                    if isinstance(v, dict):
+                        add(v.get("value"))
+            elif isinstance(vals, dict):
+                add(vals.get("value"))
     elif resource == "file":
         if param in ("type", "size", "description"):
             add(_scalar_value(meta, param))
