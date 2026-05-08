@@ -341,10 +341,10 @@ def _value_matches(expected: str, candidate: str, mode: str) -> bool:
 
 def _check_filter_semantics(response: APIResponse, case: dict) -> tuple[bool, str | None, str | None]:
     """
-    Best-effort semantic check for generated ``__filter_*`` list cases.
+    Semantic check for generated ``__filter_*`` list cases.
 
     Returns:
-        (ok, error, note) where note is set for informative pass/skip situations.
+        (ok, error, note) where note is set for informative pass situations.
     """
     data = response.json()
     if not isinstance(data, dict):
@@ -382,7 +382,15 @@ def _check_filter_semantics(response: APIResponse, case: dict) -> tuple[bool, st
             )
 
     if compared == 0:
-        return True, None, f"semantic check skipped: no row mapping for filter param {param!r}"
+        return (
+            False,
+            (
+                "Filter semantic check could not validate any rows for "
+                f"{param}={expected!r}; no comparable candidate values were found in response data[]. "
+                "Possible causes: response metadata shape drift or missing extractor mapping."
+            ),
+            None,
+        )
     return True, None, f"semantic check passed: validated {compared} row(s)"
 
 
