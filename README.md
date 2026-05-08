@@ -40,12 +40,11 @@ cp .env.example .env
 
 **Test runner UI (DCC-focused)** — easiest way to run DCC contract tests, DCC performance runs, and DCC pytest suites with live logs:
 
-1. Activate the venv (`source .venv/bin/activate` on macOS/Linux).
-2. Start the UI in one of these ways:
+1. Start the UI in one of these ways:
    - **macOS:** double-click **`launcher.command`**
    - **Windows:** double-click **`launcher.bat`**
    - **Any OS:** from the repo root run **`python3 launcher.py`** (or `python launcher.py`)
-3. Your browser opens; pick **environment** (QA / Stage / Prod host) and **suite**:
+2. Your browser opens; pick **environment** (QA / Stage / Prod host) and **suite**:
    - DCC OpenAPI contract runner
    - DCC performance runner
    - DCC pytest smoke (`smoke and project_dcc`)
