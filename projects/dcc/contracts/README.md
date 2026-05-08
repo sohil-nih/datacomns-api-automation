@@ -111,8 +111,11 @@ The functional runner includes these assertions:
   - uses parameter-aware matching mode:
     - default: case-insensitive exact
     - selected params: case-insensitive substring (for example file `description`)
-  - if `data[]` is empty: passes by default
-  - if mapping is unavailable for a row/param: semantic check is skipped for that row and noted
+  - if `data[]` is empty: passes by default (unless `--strict-filter-data` is used, which fails empty `data[]`)
+  - if no returned rows can be semantically compared for the generated filter param (`compared == 0`), the case fails
+    - this indicates the runner could not validate the filter against response row values
+    - likely causes: response metadata shape drift or extractor mapping gap
+  - **Maintenance:** when new list-endpoint query parameters are added to `openapi.json`, update the filter extraction and semantic verification logic (see `framework/contract_runner/dcc_filter_extract.py`: discovery helpers like `_subject_row_filters` / `_sample_row_filters` / `_file_row_filters`, `filter_candidates_from_row`, and optional `filter_match_mode`) so generated `__filter_*` cases can discover example values and validate rows; otherwise those params may not get meaningful semantic checks.
 
 ## 5) Verifications NOT included
 
@@ -215,13 +218,14 @@ What to inspect on failure:
 2. **expected_status vs actual_status**
 3. **error**: includes mismatch details and sometimes response body snippet
 4. **path/path_display + params**: exact request that failed
-5. **semantic_note** (when present): explains semantic check pass/skip context
+5. **semantic_note** (when present): explains semantic check pass context (for example how many rows were validated)
 
 Common failure patterns:
 
 - `actual_status = 0`: transport/timeout/TLS/DNS failure in HTTP client path
 - `Expected 200, got ...`: endpoint behavior or environment/data drift
 - filter semantic mismatch: returned rows do not match generated filter expectation under current mapping rules
+- filter semantic check could not validate any rows: no comparable row values found for generated filter param (mapping/shape issue)
 
 Recommended triage sequence:
 

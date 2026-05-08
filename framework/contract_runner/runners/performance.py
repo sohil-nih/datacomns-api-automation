@@ -14,12 +14,15 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Callable
 
-from framework.contract_runner.client import ContractAPIClient
+from framework.contract_runner.client import ContractAPIClient, _build_query_string
 
 
 @dataclass
 class PerfResult:
-    """One timed HTTP GET during a perf run (status 0 means client/executor failure)."""
+    """One timed HTTP GET during a perf run (status 0 means client/executor failure).
+
+    ``path`` is the request path plus serialized query string (same as success and executor failure paths).
+    """
 
     operation_id: str
     path: str
@@ -149,11 +152,12 @@ def run_perf_tests(
             time.sleep(delay)
         path = case.get("path") or ""
         params = case.get("params")
+        path_display = path + _build_query_string(params)
         op_id = case.get("operation_id", "")
         response = client.get(path, params)
         return PerfResult(
             operation_id=op_id,
-            path=path,
+            path=path_display,
             iteration=iteration,
             status_code=response.status_code,
             duration_ms=round(response.duration * 1000, 3),
@@ -179,9 +183,12 @@ def run_perf_tests(
                 result = future.result()
             except Exception as exc:
                 case, iteration = futures[future]
+                exc_path = case.get("path") or ""
+                exc_params = case.get("params")
+                exc_path_display = exc_path + _build_query_string(exc_params)
                 result = PerfResult(
                     operation_id=case.get("operation_id", ""),
-                    path=case.get("path") or "",
+                    path=exc_path_display,
                     iteration=iteration,
                     status_code=0,
                     duration_ms=0.0,
