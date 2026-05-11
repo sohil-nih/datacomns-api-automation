@@ -8,10 +8,10 @@ Environment:
   FEDERATION_CONTRACT_REPORT_DIR — default ``reports/federation/contract``
   FEDERATION_CONTRACT_EXCLUDE_PATHS — comma-separated OpenAPI path keys to skip (default: ``/subject-mapping``;
     CPI route not exposed on all environments). Set to empty to include all paths.
-  FEDERATION_AL_EXPECTED_SOURCES — optional comma-separated node ``source`` labels (e.g. PCDC,Treehouse,…).
-    When set, any response whose JSON is a non-empty array of objects each with string ``source`` must
-    include every listed name (Aggregation Layer envelope). Per-node ``errors`` in the body are allowed.
-    HTTP must still be **200**; 4xx/5xx (including 504) fail the case. Unset or empty skips this check.
+  FEDERATION_AL_EXPECTED_SOURCES — comma-separated node ``source`` labels; **defaults** to seven QA names
+    in code when unset or blank. Set to ``none`` or ``-`` to disable roster checks. When enabled, any
+    response whose JSON is a non-empty array of objects each with string ``source`` must include every
+    listed name. Per-node ``errors`` in the body are allowed. HTTP must still be **200**.
   DATACOMNS_SSL_VERIFY — set ``false`` to disable TLS verification (not for production)
 """
 from __future__ import annotations
@@ -41,7 +41,10 @@ def main_federation() -> None:
     from framework.contract_runner.loader import get_paths, load_spec
     from framework.contract_runner.reporters.html_report import write_html_report_federation
     from framework.contract_runner.reporters.report import aggregate_results, write_json_report
-    from framework.contract_runner.runners.functional import run_functional_tests_dcc
+    from framework.contract_runner.runners.functional import (
+        federation_al_expected_sources,
+        run_functional_tests_dcc,
+    )
 
     parser = argparse.ArgumentParser(description="Federation API OpenAPI contract test runner")
     parser.add_argument(
@@ -98,10 +101,15 @@ def main_federation() -> None:
     log(f"Spec loaded: {len(get_paths(spec))} paths.")
 
     log(f"Client: base_url={client.base_url}")
-    al_sources_raw = os.getenv("FEDERATION_AL_EXPECTED_SOURCES", "").strip()
-    if al_sources_raw:
-        n_src = len([p for p in al_sources_raw.split(",") if p.strip()])
-        log(f"AL source roster check enabled ({n_src} expected source(s) from FEDERATION_AL_EXPECTED_SOURCES).")
+    al_src = federation_al_expected_sources()
+    if al_src:
+        raw_e = os.getenv("FEDERATION_AL_EXPECTED_SOURCES")
+        if raw_e is not None and raw_e.strip() and raw_e.strip().lower() not in ("none", "-"):
+            log(f"AL source roster: {len(al_src)} expected source(s) from FEDERATION_AL_EXPECTED_SOURCES.")
+        else:
+            log(f"AL source roster: {len(al_src)} expected source(s) (default list; set env to override).")
+    else:
+        log("AL source roster: disabled (FEDERATION_AL_EXPECTED_SOURCES is none or -).")
     log("Running discovery...")
     test_data = discover_federation(client)
     discovery_info: dict | None = None
@@ -120,7 +128,10 @@ def main_federation() -> None:
             discovery_info[key] = v
         log(f"Discovery: {', '.join(parts)}")
     else:
-        log("Discovery: no data (API unreachable or empty subject list).")
+        log(
+            "Discovery: no path/filter seed data (GET /subject not 200, empty harmonized rows, "
+            "or unrecognized JSON shape)."
+        )
 
     raw_exclude = os.getenv("FEDERATION_CONTRACT_EXCLUDE_PATHS", "/subject-mapping")
     exclude_paths = frozenset(p.strip() for p in raw_exclude.split(",") if p.strip())
@@ -150,12 +161,13 @@ def main_federation() -> None:
         duration = result.get("duration")
         duration_ms = f"{duration * 1000:.0f} ms" if duration is not None else "?"
         note = result.get("pagination_pair_display_note")
-        suffix = f" — {note}" if note else ""
+        neg = " [negative]" if result.get("negative") else ""
+        suffix = (f" — {note}" if note else "") + neg
         if result.get("passed"):
             log(f"  [Pass] GET {path} ({duration_ms}){suffix}")
         else:
             err = (result.get("error") or "")[:80]
-            log(f"  [Fail] GET {path} ({duration_ms}) - {err}")
+            log(f"  [Fail] GET {path} ({duration_ms}) - {err}{neg}")
 
     if quiet:
         print(f"Running {len(cases)} test cases...", flush=True)

@@ -22,7 +22,7 @@ Options mirror DCC (`--tags`, `--strict-filter-data`, `--spec`, `--report`, `--b
 
 Reports default to **`reports/federation/contract/`** (override with `FEDERATION_CONTRACT_REPORT_DIR`).
 
-**Aggregation Layer:** every generated case expects **200** only — including “negative” traffic (bad query / invalid path segments). Optional **`FEDERATION_AL_EXPECTED_SOURCES`**: comma-separated `source` labels. When set, if the response body is a **non-empty JSON array** of objects each with a string **`source`**, the test asserts every listed name appears at least once (per-node `errors` or empty `data` are fine). Responses that are not that shape (e.g. `/info`, `{ data, metadata }` lists) skip the roster check. See `.env.example` for a typical QA list of seven nodes.
+**Aggregation Layer:** every generated case expects **200** only — including “negative” traffic (bad query / invalid path segments). **`FEDERATION_AL_EXPECTED_SOURCES`**: comma-separated `source` labels; **defaults in code** to the seven QA nodes when the variable is unset or blank. Set to **`none`** or **`-`** to disable roster checks. When the list is non-empty and the response body is a **non-empty JSON array** of objects each with a string **`source`**, every listed name must appear at least once (per-node `errors` or empty `data` are fine). Other shapes (e.g. `/info`, `{ data, metadata }`) skip the roster check.
 
 **Base URL:** set `DATACOMNS_FEDERATION_BASE_URL` to the Federation **host** only (e.g. `https://federation-qa.ccdi.cancer.gov`); `api_prefix` `/api/v1` is appended from `config/projects.yaml`. The local web UI sets QA/stage/prod Federation hosts automatically for the Federation contract suite (not the DCC host).
 

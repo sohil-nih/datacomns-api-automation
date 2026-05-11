@@ -262,12 +262,36 @@ def run_functional_tests_dcc(
     return run_functional_tests(client, cases, on_case_done=on_case_done)
 
 
-def _federation_al_expected_sources_from_env() -> list[str]:
-    """Comma-separated ``FEDERATION_AL_EXPECTED_SOURCES``; empty or unset means skip AL roster checks."""
-    raw = os.getenv("FEDERATION_AL_EXPECTED_SOURCES", "").strip()
-    if not raw:
+# Default QA Aggregation Layer node labels (env ``FEDERATION_AL_EXPECTED_SOURCES`` overrides this list).
+DEFAULT_FEDERATION_AL_EXPECTED_SOURCES: tuple[str, ...] = (
+    "PCDC",
+    "Treehouse",
+    "StJude",
+    "KidsFirst",
+    "ccdi-ecDNA",
+    "ccdi-iusccc-pst",
+    "CCDI-DCC",
+)
+
+
+def federation_al_expected_sources() -> list[str]:
+    """
+    Sources required when the response matches the AL multi-node roster shape.
+
+    - **Unset** or **whitespace-only** ``FEDERATION_AL_EXPECTED_SOURCES`` → use
+      ``DEFAULT_FEDERATION_AL_EXPECTED_SOURCES``.
+    - **Non-empty** comma-separated value → use that list (override for stage/prod).
+    - **``none``** or **``-``** (case-insensitive) → disable roster checks (CI / local escape hatch).
+    """
+    raw = os.getenv("FEDERATION_AL_EXPECTED_SOURCES")
+    if raw is None:
+        return list(DEFAULT_FEDERATION_AL_EXPECTED_SOURCES)
+    stripped = raw.strip()
+    if not stripped:
+        return list(DEFAULT_FEDERATION_AL_EXPECTED_SOURCES)
+    if stripped.lower() in ("none", "-"):
         return []
-    return [p.strip() for p in raw.split(",") if p.strip()]
+    return [p.strip() for p in stripped.split(",") if p.strip()]
 
 
 def _is_al_multi_source_roster(data: object) -> bool:
@@ -356,7 +380,7 @@ def _check_basic_shape(response: APIResponse, case: dict) -> tuple[bool, str | N
         if not isinstance(arr, list) or len(arr) < 1:
             return False, "expect_non_empty_data: top-level data[] must be non-empty"
 
-    expected_sources = _federation_al_expected_sources_from_env()
+    expected_sources = federation_al_expected_sources()
     if expected_sources and data is not None and _is_al_multi_source_roster(data):
         ok_roster, err_roster = _check_federation_al_source_roster(data, expected_sources)
         if not ok_roster:
