@@ -229,7 +229,7 @@ Grouped by project in **[`.env.example`](.env.example)** (Federation block, DCC 
 
 | Area | Key vars |
 |------|----------|
-| Federation | `DATACOMNS_FEDERATION_BASE_URL`, `MEMGRAPH_URI`, `MEMGRAPH_USER`, `MEMGRAPH_PASSWORD`; optional `FEDERATION_CONTRACT_REPORT_DIR`, `FEDERATION_CONTRACT_EXCLUDE_PATHS` (default skips `/subject-mapping` where CPI is unavailable) |
+| Federation | `DATACOMNS_FEDERATION_BASE_URL`, `MEMGRAPH_URI`, `MEMGRAPH_USER`, `MEMGRAPH_PASSWORD`; optional `FEDERATION_CONTRACT_REPORT_DIR`, `FEDERATION_CONTRACT_EXCLUDE_PATHS`, `FEDERATION_AL_EXPECTED_SOURCES` (AL multi-node roster check; HTTP must be 200 only) |
 | DCC | `DATACOMNS_DCC_BASE_URL`, `MEMGRAPH_DCC_URI`, `MEMGRAPH_DCC_USER`, `MEMGRAPH_DCC_PASSWORD`; optional `DCC_CONTRACT_REPORT_DIR`, `DCC_PERF_REPORT_DIR`, `DATACOMNS_SSL_VERIFY` |
 | Global | `DATACOMNS_SKIP_LIVE_TESTS`, `DATACOMNS_SKIP_MEMGRAPH_*`, `DATACOMNS_HTTP_TIMEOUT` |
 | Debug print | **On by default.** Set `DATACOMNS_PRINT_RESPONSES=0` or `off` to disable. Logs **API** bodies and **Memgraph** rows. **`pytest.ini` includes `-s`** so stdout is visible; use **`pytest --capture=sys`** if you need captured output. |

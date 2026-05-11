@@ -9,6 +9,7 @@ for ``aggregate_results`` and HTML/JSON reporters.
 """
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Callable
 
@@ -261,6 +262,52 @@ def run_functional_tests_dcc(
     return run_functional_tests(client, cases, on_case_done=on_case_done)
 
 
+def _federation_al_expected_sources_from_env() -> list[str]:
+    """Comma-separated ``FEDERATION_AL_EXPECTED_SOURCES``; empty or unset means skip AL roster checks."""
+    raw = os.getenv("FEDERATION_AL_EXPECTED_SOURCES", "").strip()
+    if not raw:
+        return []
+    return [p.strip() for p in raw.split(",") if p.strip()]
+
+
+def _is_al_multi_source_roster(data: object) -> bool:
+    """
+    True when the body is a non-empty top-level JSON array of objects, each with a non-empty string ``source``.
+
+    Used for Federation Aggregation Layer responses where each element is one data commons node.
+    """
+    if not isinstance(data, list) or len(data) < 1:
+        return False
+    for el in data:
+        if not isinstance(el, dict):
+            return False
+        s = el.get("source")
+        if not isinstance(s, str) or not s.strip():
+            return False
+    return True
+
+
+def _check_federation_al_source_roster(data: object, expected: list[str]) -> tuple[bool, str | None]:
+    """Assert every ``expected`` source string appears as ``source`` on some array element."""
+    if not expected:
+        return True, None
+    if not isinstance(data, list):
+        return False, "AL roster: internal error, expected list body"
+    observed: set[str] = set()
+    for el in data:
+        if isinstance(el, dict):
+            s = el.get("source")
+            if isinstance(s, str):
+                observed.add(s)
+    missing = [e for e in expected if e not in observed]
+    if missing:
+        return (
+            False,
+            f"AL roster: missing expected source(s) {missing!r}; observed={sorted(observed)!r}",
+        )
+    return True, None
+
+
 def _check_basic_shape(response: APIResponse, case: dict) -> tuple[bool, str | None]:
     """Validate body when status expectations are met: exact JSON, list length, or schema-ref coarse shape."""
     data = response.json()
@@ -308,6 +355,13 @@ def _check_basic_shape(response: APIResponse, case: dict) -> tuple[bool, str | N
         arr = data.get("data")
         if not isinstance(arr, list) or len(arr) < 1:
             return False, "expect_non_empty_data: top-level data[] must be non-empty"
+
+    expected_sources = _federation_al_expected_sources_from_env()
+    if expected_sources and data is not None and _is_al_multi_source_roster(data):
+        ok_roster, err_roster = _check_federation_al_source_roster(data, expected_sources)
+        if not ok_roster:
+            return False, err_roster
+
     if data is None:
         return True, None
     schema_ref = case.get("response_schema_ref")

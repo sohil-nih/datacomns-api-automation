@@ -8,6 +8,10 @@ Environment:
   FEDERATION_CONTRACT_REPORT_DIR — default ``reports/federation/contract``
   FEDERATION_CONTRACT_EXCLUDE_PATHS — comma-separated OpenAPI path keys to skip (default: ``/subject-mapping``;
     CPI route not exposed on all environments). Set to empty to include all paths.
+  FEDERATION_AL_EXPECTED_SOURCES — optional comma-separated node ``source`` labels (e.g. PCDC,Treehouse,…).
+    When set, any response whose JSON is a non-empty array of objects each with string ``source`` must
+    include every listed name (Aggregation Layer envelope). Per-node ``errors`` in the body are allowed.
+    HTTP must still be **200**; 4xx/5xx (including 504) fail the case. Unset or empty skips this check.
   DATACOMNS_SSL_VERIFY — set ``false`` to disable TLS verification (not for production)
 """
 from __future__ import annotations
@@ -52,7 +56,11 @@ def main_federation() -> None:
         help="Report directory (default: FEDERATION_CONTRACT_REPORT_DIR or reports/federation/contract)",
     )
     parser.add_argument("--tags", default=None, help="Comma-separated OpenAPI tags (default: all)")
-    parser.add_argument("--no-negative", action="store_true", help="Skip negative test cases")
+    parser.add_argument(
+        "--no-negative",
+        action="store_true",
+        help="Skip bad-query (page=0, per_page=0) and invalid-path cases (they still expect HTTP 200 for AL)",
+    )
     parser.add_argument(
         "--strict-filter-data",
         action="store_true",
@@ -90,6 +98,10 @@ def main_federation() -> None:
     log(f"Spec loaded: {len(get_paths(spec))} paths.")
 
     log(f"Client: base_url={client.base_url}")
+    al_sources_raw = os.getenv("FEDERATION_AL_EXPECTED_SOURCES", "").strip()
+    if al_sources_raw:
+        n_src = len([p for p in al_sources_raw.split(",") if p.strip()])
+        log(f"AL source roster check enabled ({n_src} expected source(s) from FEDERATION_AL_EXPECTED_SOURCES).")
     log("Running discovery...")
     test_data = discover_federation(client)
     discovery_info: dict | None = None

@@ -100,34 +100,6 @@ def _resolve_path_params_federation(path_template: str, path_params: list[dict],
     return values
 
 
-def _expected_invalid_path_status_federation(path_template: str, response_codes: set[int]) -> int:
-    """HTTP status for invalid path segments (Federation live behavior)."""
-    pt = path_template.rstrip("/")
-    if "/by/" in pt and pt.endswith("/count") and 400 in response_codes:
-        return 400
-    if path_template == "/organization/{name}":
-        return 404
-    if path_template == "/namespace/{organization}/{namespace}":
-        return 400
-    if path_template in (
-        "/subject/{organization}/{namespace}/{name}",
-        "/sample/{organization}/{namespace}/{name}",
-        "/file/{organization}/{namespace}/{name}",
-    ):
-        return 400
-    if 404 in response_codes:
-        return 404
-    if 422 in response_codes:
-        return 422
-    if 400 in response_codes:
-        return 400
-    return 404
-
-
-def _expected_bad_query_status_federation() -> int:
-    return 400
-
-
 def generate_cases_federation(
     spec: dict,
     test_data: dict,
@@ -138,6 +110,11 @@ def generate_cases_federation(
     exclude_paths: frozenset[str] | None = None,
 ) -> list[dict]:
     """Produce GET contract cases for Federation OpenAPI (paths like ``/subject``, not ``/api/v1/subject``).
+
+    Aggregation Layer (AL): every case expects **HTTP 200** only (4xx/5xx including 504 fail the run).
+    ``include_negative`` adds **bad query** (``page=0``, ``per_page=0``) and **invalid path** GETs using
+    the same garbage segments as the DCC generator, but with ``expected_status`` **200** — the AL still
+    responds 200 and may report node errors inside the JSON body.
 
     ``exclude_paths``: path templates to skip (e.g. CPI ``/subject-mapping`` not deployed on all gateways).
     """
@@ -224,25 +201,22 @@ def generate_cases_federation(
                     "path": path_str,
                     "params": pag_q,
                     "expected_status": 200,
-                    "operation_id": f"{operation_id}__pagination_positive",
-                    "summary": f"{summary} (pagination: page=1, per_page=1)",
+                    "operation_id": f"{operation_id}__pagination_query",
+                    "summary": f"{summary} (query: page=1, per_page=1)",
                     "tag": tag,
                     "negative": False,
                     "response_schema_ref": schema_ref,
-                    "pagination_assert_max_items": 1,
-                    "pagination_list_key": "data",
                 })
 
-            bqs = _expected_bad_query_status_federation()
             if include_negative and _has_page_and_per_page(query_params):
                 base_q = dict(query_vals) if query_vals else {}
                 if "page" in pp_names:
                     cases.append({
                         "path": path_str,
                         "params": {**base_q, "page": 0},
-                        "expected_status": bqs,
+                        "expected_status": 200,
                         "operation_id": f"{operation_id}__bad_query_page",
-                        "summary": f"{summary} (bad query: page=0)",
+                        "summary": f"{summary} (bad query: page=0; AL expects 200)",
                         "tag": tag,
                         "negative": True,
                         "response_schema_ref": None,
@@ -251,25 +225,26 @@ def generate_cases_federation(
                     cases.append({
                         "path": path_str,
                         "params": {**base_q, "per_page": 0},
-                        "expected_status": bqs,
+                        "expected_status": 200,
                         "operation_id": f"{operation_id}__bad_query_per_page",
-                        "summary": f"{summary} (bad query: per_page=0)",
+                        "summary": f"{summary} (bad query: per_page=0; AL expects 200)",
                         "tag": tag,
                         "negative": True,
                         "response_schema_ref": None,
                     })
 
-        if include_negative and path_params and (404 in response_codes_set or 422 in response_codes_set or 400 in response_codes_set):
-            expected = _expected_invalid_path_status_federation(path_template, response_codes_set)
+        if include_negative and path_params and (
+            404 in response_codes_set or 422 in response_codes_set or 400 in response_codes_set
+        ):
             neg_vals = _negative_path_params(path_template, path_params, test_data)
             if neg_vals is not None:
                 path_str_neg = _fill_path_template(path_template, neg_vals, base_path)
                 cases.append({
                     "path": path_str_neg,
                     "params": None,
-                    "expected_status": expected,
+                    "expected_status": 200,
                     "operation_id": operation_id,
-                    "summary": f"{summary} (invalid param)",
+                    "summary": f"{summary} (invalid param; AL expects 200)",
                     "tag": tag,
                     "negative": True,
                     "response_schema_ref": None,

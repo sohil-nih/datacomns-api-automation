@@ -17,8 +17,12 @@ python -m framework.contract_runner.federation_cli
 bash scripts/run_federation_contract_suite.sh
 ```
 
-Options mirror DCC (`--tags`, `--no-negative`, `--strict-filter-data`, `--spec`, `--report`, `--base-url`).  
+Options mirror DCC (`--tags`, `--strict-filter-data`, `--spec`, `--report`, `--base-url`).  
+`--no-negative` skips bad-query (`page=0`, `per_page=0`) and invalid-path GETs; by default those cases still run and **expect HTTP 200** (Aggregation Layer returns 200 and may put node issues in the body; 4xx/5xx including **504** still fail the run).
+
 Reports default to **`reports/federation/contract/`** (override with `FEDERATION_CONTRACT_REPORT_DIR`).
+
+**Aggregation Layer:** every generated case expects **200** only — including “negative” traffic (bad query / invalid path segments). Optional **`FEDERATION_AL_EXPECTED_SOURCES`**: comma-separated `source` labels. When set, if the response body is a **non-empty JSON array** of objects each with a string **`source`**, the test asserts every listed name appears at least once (per-node `errors` or empty `data` are fine). Responses that are not that shape (e.g. `/info`, `{ data, metadata }` lists) skip the roster check. See `.env.example` for a typical QA list of seven nodes.
 
 **Base URL:** set `DATACOMNS_FEDERATION_BASE_URL` to the Federation **host** only (e.g. `https://federation-qa.ccdi.cancer.gov`); `api_prefix` `/api/v1` is appended from `config/projects.yaml`. The local web UI sets QA/stage/prod Federation hosts automatically for the Federation contract suite (not the DCC host).
 
