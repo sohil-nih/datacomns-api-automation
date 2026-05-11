@@ -11,7 +11,7 @@ Same pattern as DCC: discover → generate cases from the spec → run GETs → 
 
 ```bash
 # From repo root (venv active)
-python -m framework.contract_runner.federation_cli
+python -m framework.contract_runner.federation.cli
 
 # Or
 bash scripts/run_federation_contract_suite.sh

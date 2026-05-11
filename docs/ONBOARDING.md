@@ -67,7 +67,7 @@ Read **[ADDING_NEW_PROJECT.md](ADDING_NEW_PROJECT.md)** — copy `projects/feder
 
 The package **`framework/contract_runner`** drives GET requests from **`projects/dcc/contracts/openapi.json`**: live discovery (`/subject`, `/sample`, …), case generation, then JSON + HTML reports.
 
-- **Functional contract run:** `bash scripts/run_dcc_contract_suite.sh` or `python -m framework.contract_runner.dcc_cli`
+- **Functional contract run:** `bash scripts/run_dcc_contract_suite.sh` or `python -m framework.contract_runner.dcc.cli`
 - **Performance (positive cases only):** `bash scripts/run_dcc_perf.sh`
 - **Browser UI:** `python launcher.py` (sets `DATACOMNS_DCC_BASE_URL` per selected environment)
 

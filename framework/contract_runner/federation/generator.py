@@ -2,12 +2,14 @@
 OpenAPI-driven GET case generation for the CCDI Federation Resource API.
 
 Federation OpenAPI documents use **path keys without** a ``/api/v1`` prefix (the server
-URL carries ``/api/v1``). This module mirrors ``dcc_generator`` with ``base_path`` ``""``
+URL carries ``/api/v1``). This module mirrors ``dcc.generator`` with ``base_path`` ``""``
 and templates like ``/subject`` instead of ``/api/v1/subject``.
+
+Reuses query-default helpers from ``framework.contract_runner.dcc.generator``.
 """
 from __future__ import annotations
 
-from framework.contract_runner.dcc_generator import (
+from framework.contract_runner.dcc.generator import (
     MAX_FILTER_EXTRA_CASES_PER_OP,
     _default_query_params_dcc,
     _has_page_and_per_page,

@@ -1,9 +1,9 @@
 """
-Harvest concrete query-filter values from DCC list API rows for contract case generation.
+Harvest concrete query-filter values from harmonized list API rows for contract case generation.
 
 Maps ``metadata`` shapes returned by ``GET /subject``, ``GET /sample``, and ``GET /file``
-to OpenAPI query parameter names. Used by discovery (``filter_examples``) and filter
-semantic checks in the functional runner.
+to OpenAPI query parameter names. Shared by DCC and Federation discovery (``filter_examples``)
+and filter semantic checks in the functional runner.
 """
 from __future__ import annotations
 

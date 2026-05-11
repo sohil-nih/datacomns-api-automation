@@ -42,9 +42,9 @@ FEDERATION_ENVIRONMENTS: dict[str, str] = {
 }
 
 SUITES: dict[str, list[str]] = {
-    "dcc_contract": [sys.executable, "-m", "framework.contract_runner.dcc_cli"],
-    "federation_contract": [sys.executable, "-m", "framework.contract_runner.federation_cli"],
-    "dcc_perf": [sys.executable, "-m", "framework.contract_runner.dcc_perf_cli"],
+    "dcc_contract": [sys.executable, "-m", "framework.contract_runner.dcc.cli"],
+    "federation_contract": [sys.executable, "-m", "framework.contract_runner.federation.cli"],
+    "dcc_perf": [sys.executable, "-m", "framework.contract_runner.dcc.perf_cli"],
     "dcc_pytest_smoke": [
         sys.executable,
         "-m",

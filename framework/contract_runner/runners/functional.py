@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from framework.contract_runner.client import APIResponse, ContractAPIClient, _build_query_string
-from framework.contract_runner.dcc_filter_extract import filter_candidates_from_row, filter_match_mode
+from framework.contract_runner.filter_extract import filter_candidates_from_row, filter_match_mode
 
 @dataclass(frozen=True)
 class PaginationPairOutcome:

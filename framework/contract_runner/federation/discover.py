@@ -8,8 +8,8 @@ Output keys match ``generate_cases_federation`` (same as ``discover_dcc``).
 from __future__ import annotations
 
 from framework.contract_runner.client import ContractAPIClient
-from framework.contract_runner.dcc_discover import _entity_triple
-from framework.contract_runner.dcc_filter_extract import build_filter_examples_from_list_payloads
+from framework.contract_runner.entity_extract import entity_triple
+from framework.contract_runner.filter_extract import build_filter_examples_from_list_payloads
 
 
 def _merged_harmonized_rows(body: object) -> list[dict]:
@@ -40,7 +40,7 @@ def _merged_harmonized_rows(body: object) -> list[dict]:
 
 def _first_triple_from_rows(rows: list[dict]) -> tuple[str, str, str] | None:
     for row in rows:
-        t = _entity_triple(row)
+        t = entity_triple(row)
         if t:
             return t
     return None
