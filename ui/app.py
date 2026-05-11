@@ -1,14 +1,15 @@
 """
 Datacomns API Test Runner — **Flask** backend for the local web UI.
 
-**Flow:** POST ``/run`` starts a subprocess (DCC contract CLI, perf CLI, or pytest) with
-``DATACOMNS_DCC_BASE_URL`` set from ``ENVIRONMENTS``. The UI reads **Server-Sent Events** from
+**Flow:** POST ``/run`` starts a subprocess (contract CLIs, perf CLI, or pytest) with the suite’s
+base-URL env var set from a host map (DCC vs Federation). The UI reads **Server-Sent Events** from
 ``/stream/<run_id>`` for live logs; ``/status`` exposes coarse state; POST ``/stop/<run_id>`` sends
 SIGTERM to the process group.
 
-``ENVIRONMENTS`` maps short keys (qa/stage/prod) to DCC API **host** URLs only — path prefix
-comes from ``config/projects.yaml`` / ``ContractAPIClient``. ``SUITES`` maps UI suite ids to argv
-vectors (``python -m`` …).
+``DCC_ENVIRONMENTS`` / ``FEDERATION_ENVIRONMENTS`` map short keys (qa/stage/prod) to API **host**
+URLs only (no ``/api/v1``) — ``api_prefix`` comes from ``config/projects.yaml`` /
+``ContractAPIClient.from_project_config``. ``SUITES`` maps UI suite ids to argv vectors
+(``python -m`` …).
 """
 from __future__ import annotations
 
@@ -28,14 +29,21 @@ from flask import Flask, Response, jsonify, render_template, request
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Host only — ``config/projects.yaml`` adds ``api_prefix`` (/api/v1) via ContractAPIClient.
-ENVIRONMENTS: dict[str, str] = {
+DCC_ENVIRONMENTS: dict[str, str] = {
     "qa": "https://dcc-qa.ccdi.cancer.gov",
     "stage": "https://dcc-stage.ccdi.cancer.gov",
     "prod": "https://dcc.ccdi.cancer.gov",
 }
 
+FEDERATION_ENVIRONMENTS: dict[str, str] = {
+    "qa": "https://federation-qa.ccdi.cancer.gov",
+    "stage": "https://federation-stage.ccdi.cancer.gov",
+    "prod": "https://federation.ccdi.cancer.gov",
+}
+
 SUITES: dict[str, list[str]] = {
     "dcc_contract": [sys.executable, "-m", "framework.contract_runner.dcc_cli"],
+    "federation_contract": [sys.executable, "-m", "framework.contract_runner.federation_cli"],
     "dcc_perf": [sys.executable, "-m", "framework.contract_runner.dcc_perf_cli"],
     "dcc_pytest_smoke": [
         sys.executable,
@@ -56,6 +64,23 @@ SUITES: dict[str, list[str]] = {
         "dcc_regression",
     ],
 }
+
+# Which env var receives the selected host URL for each suite (must match projects.yaml base_url_env).
+SUITE_BASE_URL_ENV: dict[str, str] = {
+    "dcc_contract": "DATACOMNS_DCC_BASE_URL",
+    "dcc_perf": "DATACOMNS_DCC_BASE_URL",
+    "dcc_pytest_smoke": "DATACOMNS_DCC_BASE_URL",
+    "dcc_pytest_regression": "DATACOMNS_DCC_BASE_URL",
+    "federation_contract": "DATACOMNS_FEDERATION_BASE_URL",
+}
+
+
+def _hosts_for_suite(suite_key: str) -> dict[str, str]:
+    """Return qa/stage/prod host map for the suite (Federation contract uses Federation gateways)."""
+    if suite_key == "federation_contract":
+        return FEDERATION_ENVIRONMENTS
+    return DCC_ENVIRONMENTS
+
 
 app = Flask(__name__)
 
@@ -107,7 +132,8 @@ def run():
     env_key = body.get("env", "qa")
     suite_key = body.get("suite", "dcc_contract")
 
-    if env_key not in ENVIRONMENTS:
+    hosts = _hosts_for_suite(suite_key)
+    if env_key not in hosts:
         return jsonify({"error": f"Unknown environment: {env_key}"}), 400
     if suite_key not in SUITES:
         return jsonify({"error": f"Unknown suite: {suite_key}"}), 400
@@ -117,11 +143,12 @@ def run():
             return jsonify({"error": "A run is already in progress"}), 409
 
         run_id = str(uuid.uuid4())
-        base_host = ENVIRONMENTS[env_key]
+        base_host = hosts[env_key]
         cmd = SUITES[suite_key]
 
         env = os.environ.copy()
-        env["DATACOMNS_DCC_BASE_URL"] = base_host
+        base_url_key = SUITE_BASE_URL_ENV.get(suite_key, "DATACOMNS_DCC_BASE_URL")
+        env[base_url_key] = base_host
         env["PYTHONPATH"] = str(PROJECT_ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
 
         process = subprocess.Popen(
