@@ -371,7 +371,7 @@ def generate_cases_dcc(
                     "path": path_str_neg,
                     "params": None,
                     "expected_status": expected,
-                    "operation_id": operation_id,
+                    "operation_id": f"{operation_id}__invalid_path",
                     "summary": f"{summary} (invalid param)",
                     "tag": tag,
                     "negative": True,

@@ -245,7 +245,7 @@ def generate_cases_federation(
                     "path": path_str_neg,
                     "params": None,
                     "expected_status": 200,
-                    "operation_id": operation_id,
+                    "operation_id": f"{operation_id}__invalid_path",
                     "summary": f"{summary} (invalid param; AL expects 200)",
                     "tag": tag,
                     "negative": True,
