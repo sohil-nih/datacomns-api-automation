@@ -2,7 +2,7 @@
 Shared OpenAPI parsing helpers for DCC case generation.
 
 Extracts path/query parameters, response codes, and 200 JSON schema ref names from each
-operation. ``_iter_ops`` drives the main loop in ``dcc_generator``; ``_fill_path_template``
+operation. ``_iter_ops`` drives the main loop in ``dcc.generator``; ``_fill_path_template``
 substitutes path params and normalizes against ``/api/v1``.
 """
 from __future__ import annotations

@@ -1,7 +1,7 @@
 """
 CLI: concurrent performance run for DCC positive contract cases only.
 
-Uses the same discovery and generation as ``dcc_cli``; writes under
+Uses the same discovery and generation as ``dcc.cli``; writes under
 ``reports/dcc/perf`` by default (override with ``--report`` or ``DCC_PERF_REPORT_DIR``).
 """
 from __future__ import annotations
@@ -14,7 +14,7 @@ from pathlib import Path
 try:
     from dotenv import load_dotenv
 
-    load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+    load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 except ImportError:
     pass
 
@@ -30,8 +30,8 @@ def main_dcc_perf() -> None:
     from framework.config.loader import get_project_config
     from framework.contract_runner.client import ContractAPIClient
     from framework.contract_runner.config import resolve_dcc_openapi_path
-    from framework.contract_runner.dcc_discover import discover_dcc
-    from framework.contract_runner.dcc_generator import generate_cases_dcc
+    from framework.contract_runner.dcc.discover import discover_dcc
+    from framework.contract_runner.dcc.generator import generate_cases_dcc
     from framework.contract_runner.loader import get_paths, load_spec
     from framework.contract_runner.reporters.perf_report import write_perf_html_report, write_perf_json_report
     from framework.contract_runner.runners.performance import run_perf_tests

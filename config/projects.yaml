@@ -11,10 +11,10 @@ projects:
   federation:
     display_name: "CCDI Federation Service"
     base_url_env: "DATACOMNS_FEDERATION_BASE_URL"
-    default_base_url: "https://dcc-qa.ccdi.cancer.gov"
+    default_base_url: "https://federation-qa.ccdi.cancer.gov"
     api_prefix: "/api/v1"
     optional_headers_env: null
-    openapi_relative: "projects/federation/contracts/openapi.json"
+    openapi_relative: "projects/federation/contracts/federation-v130.yaml"
 
   dcc:
     display_name: "CCDI Data Commons (DCC) API"

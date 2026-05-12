@@ -97,6 +97,7 @@
       <label for="suite-select">Suite</label>
       <select id="suite-select">
         <option value="dcc_contract" selected>DCC — OpenAPI contract (autogen)</option>
+        <option value="federation_contract">Federation — OpenAPI contract (autogen)</option>
         <option value="dcc_perf">DCC — Performance</option>
         <option value="dcc_pytest_smoke">DCC — Pytest smoke (Memgraph pairs)</option>
         <option value="dcc_pytest_regression">DCC — Pytest regression (dcc_regression)</option>
@@ -136,7 +137,7 @@
   const logOutput = document.getElementById('log-output');
   const lineCount = document.getElementById('line-count');
   let currentRunId = null, eventSource = null, elapsedTimer = null, startedAt = null, lineTotal = 0, autoScroll = true;
-  const SUITE_LABELS = { dcc_contract: 'DCC contract', dcc_perf: 'DCC perf', dcc_pytest_smoke: 'Pytest smoke', dcc_pytest_regression: 'Pytest regression' };
+  const SUITE_LABELS = { dcc_contract: 'DCC contract', federation_contract: 'Federation contract', dcc_perf: 'DCC perf', dcc_pytest_smoke: 'Pytest smoke', dcc_pytest_regression: 'Pytest regression' };
   const ENV_LABELS = { qa: 'QA', stage: 'Stage', prod: 'Prod' };
   function colorize(line) {
     const span = document.createElement('span');

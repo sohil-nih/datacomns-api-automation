@@ -21,7 +21,7 @@ How it fits broader QA strategy in this repository:
 End-to-end execution flow (functional contract run):
 
 1. **Trigger**
-   - Entry point: `python -m framework.contract_runner` (or `python -m framework.contract_runner.dcc_cli`)
+   - Entry point: `python -m framework.contract_runner` (or `python -m framework.contract_runner.dcc.cli`)
    - Wrapper script: `bash scripts/run_dcc_contract_suite.sh`
 
 2. **Resolve config**
@@ -115,7 +115,7 @@ The functional runner includes these assertions:
   - if no returned rows can be semantically compared for the generated filter param (`compared == 0`), the case fails
     - this indicates the runner could not validate the filter against response row values
     - likely causes: response metadata shape drift or extractor mapping gap
-  - **Maintenance:** when new list-endpoint query parameters are added to `openapi.json`, update the filter extraction and semantic verification logic (see `framework/contract_runner/dcc_filter_extract.py`: discovery helpers like `_subject_row_filters` / `_sample_row_filters` / `_file_row_filters`, `filter_candidates_from_row`, and optional `filter_match_mode`) so generated `__filter_*` cases can discover example values and validate rows; otherwise those params may not get meaningful semantic checks.
+  - **Maintenance:** when new list-endpoint query parameters are added to `openapi.json`, update the filter extraction and semantic verification logic (see `framework/contract_runner/filter_extract.py`: discovery helpers like `_subject_row_filters` / `_sample_row_filters` / `_file_row_filters`, `filter_candidates_from_row`, and optional `filter_match_mode`) so generated `__filter_*` cases can discover example values and validate rows; otherwise those params may not get meaningful semantic checks.
 
 ## 5) Verifications NOT included
 
@@ -165,23 +165,23 @@ bash scripts/run_dcc_contract_suite.sh
 Equivalent direct command:
 
 ```bash
-python -m framework.contract_runner.dcc_cli
+python -m framework.contract_runner.dcc.cli
 ```
 
 Useful options:
 
 ```bash
 # Run only selected tags
-python -m framework.contract_runner.dcc_cli --tags Subject,Sample
+python -m framework.contract_runner.dcc.cli --tags Subject,Sample
 
 # Skip negative cases
-python -m framework.contract_runner.dcc_cli --no-negative
+python -m framework.contract_runner.dcc.cli --no-negative
 
 # Require non-empty data[] for filter cases
-python -m framework.contract_runner.dcc_cli --strict-filter-data
+python -m framework.contract_runner.dcc.cli --strict-filter-data
 
 # Override base URL and report directory
-python -m framework.contract_runner.dcc_cli \
+python -m framework.contract_runner.dcc.cli \
   --base-url https://dcc-qa.ccdi.cancer.gov/api/v1 \
   --report reports/dcc/contract
 ```
@@ -197,7 +197,7 @@ Performance runner (separate):
 ```bash
 bash scripts/run_dcc_perf.sh
 # or
-python -m framework.contract_runner.dcc_perf_cli
+python -m framework.contract_runner.dcc.perf_cli
 ```
 
 ## 7) How to interpret results

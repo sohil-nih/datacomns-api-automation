@@ -18,8 +18,10 @@ projects:
 ## 2. Copy the project folder
 
 ```bash
-cp -R projects/federation projects/my_new_api
+cp -R projects/dcc projects/my_new_api
 ```
+
+(Use **`projects/federation`** as a **contracts-only** template if the new API has no pytest suite yet—then add `conftest.py` and `tests/` when needed.)
 
 ## 3. Update `projects/my_new_api/conftest.py`
 
@@ -33,7 +35,7 @@ PROJECT_SLUG = "my_new_api"
 
 - `projects/my_new_api/tests/smoke/` — `@pytest.mark.smoke`
 - `projects/my_new_api/tests/regression/` — `@pytest.mark.regression`
-- Optional: copy `memgraph_validation/` + `tests/memgraph/` from `federation` if you use Memgraph pairs.
+- Optional: copy `memgraph_validation/` + `tests/memgraph_api/` from `dcc` if you use Memgraph pairs.
 
 Use fixtures: `api_client`, `project_config`, `require_live_api`.
 
@@ -43,13 +45,13 @@ Add `DATACOMNS_MY_NEW_API_BASE_URL=...`
 
 ## 6. Extend scripts (optional)
 
-Add `projects/my_new_api` to `scripts/run_smoke.sh` or run:
+Extend `scripts/run_smoke.sh` to include your project (it currently runs **`projects/dcc`** only) or run:
 
 ```bash
 pytest projects/my_new_api -m smoke
 ```
 
-Reference layouts: **`projects/federation/`** (Federation API), **`projects/dcc/`** (Data Commons + `MEMGRAPH_DCC_*`).
+Reference layouts: **`projects/dcc/`** (Data Commons + pytest + `MEMGRAPH_DCC_*`), **`projects/federation/`** (OpenAPI contracts only).
 
 ## 7. Pytest markers (optional)
 

@@ -19,7 +19,7 @@ from pathlib import Path
 try:
     from dotenv import load_dotenv
 
-    load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+    load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 except ImportError:
     pass
 
@@ -33,8 +33,8 @@ def main_dcc() -> None:
 
     from framework.contract_runner.client import ContractAPIClient
     from framework.contract_runner.config import resolve_dcc_openapi_path
-    from framework.contract_runner.dcc_discover import discover_dcc
-    from framework.contract_runner.dcc_generator import generate_cases_dcc
+    from framework.contract_runner.dcc.discover import discover_dcc
+    from framework.contract_runner.dcc.generator import generate_cases_dcc
     from framework.contract_runner.loader import get_paths, load_spec
     from framework.contract_runner.reporters.html_report import write_html_report_dcc
     from framework.contract_runner.reporters.report import aggregate_results, write_json_report

@@ -11,23 +11,8 @@ few generated cases can be built.
 from __future__ import annotations
 
 from framework.contract_runner.client import ContractAPIClient
-from framework.contract_runner.dcc_filter_extract import build_filter_examples_from_list_payloads
-
-
-def _entity_triple(record: dict) -> tuple[str, str, str] | None:
-    """Extract (organization, namespace_name, entity_name) from a list row's nested ``id`` object."""
-    id_ = record.get("id")
-    if not isinstance(id_, dict):
-        return None
-    ns = id_.get("namespace")
-    if not isinstance(ns, dict):
-        return None
-    org = ns.get("organization")
-    ns_name = ns.get("name")
-    ent_name = id_.get("name")
-    if org is None or ns_name is None or ent_name is None:
-        return None
-    return str(org), str(ns_name), str(ent_name)
+from framework.contract_runner.entity_extract import entity_triple
+from framework.contract_runner.filter_extract import build_filter_examples_from_list_payloads
 
 
 def discover_dcc(client: ContractAPIClient) -> dict:
@@ -58,7 +43,7 @@ def discover_dcc(client: ContractAPIClient) -> dict:
     first_sub = rows_sub[0]
     if not isinstance(first_sub, dict):
         return data
-    triple = _entity_triple(first_sub)
+    triple = entity_triple(first_sub)
     if not triple:
         return data
     org, ns, subj_name = triple
@@ -77,7 +62,7 @@ def discover_dcc(client: ContractAPIClient) -> dict:
             dr = b_s.get("data")
             rows_samp = dr if isinstance(dr, list) else None
             if isinstance(dr, list) and dr and isinstance(dr[0], dict):
-                t2 = _entity_triple(dr[0])
+                t2 = entity_triple(dr[0])
                 if t2:
                     data["dcc_sample_organization"] = t2[0]
                     data["dcc_sample_namespace"] = t2[1]
@@ -91,7 +76,7 @@ def discover_dcc(client: ContractAPIClient) -> dict:
             dr = b_f.get("data")
             rows_file = dr if isinstance(dr, list) else None
             if isinstance(dr, list) and dr and isinstance(dr[0], dict):
-                t3 = _entity_triple(dr[0])
+                t3 = entity_triple(dr[0])
                 if t3:
                     data["dcc_file_organization"] = t3[0]
                     data["dcc_file_namespace"] = t3[1]

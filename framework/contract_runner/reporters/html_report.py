@@ -47,6 +47,32 @@ def write_html_report_dcc(
     )
 
 
+def write_html_report_federation(
+    summary: dict,
+    results: list[dict],
+    out_path: str | Path,
+    base_url: str | None = None,
+    environment: str | None = None,
+    model_handle: str | None = None,
+    model_version: str | None = None,
+    discovery_info: dict | None = None,
+    cases_generated: dict | None = None,
+) -> None:
+    """Emit the CCDI Federation Resource API titled HTML contract report."""
+    write_html_report(
+        summary,
+        results,
+        out_path,
+        title="CCDI Federation Resource API Contract Report",
+        base_url=base_url,
+        environment=environment,
+        model_handle=model_handle,
+        model_version=model_version,
+        discovery_info=discovery_info,
+        cases_generated=cases_generated,
+    )
+
+
 def write_html_report(
     summary: dict,
     results: list[dict],
