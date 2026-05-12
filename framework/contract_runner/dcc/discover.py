@@ -7,6 +7,8 @@ count-by routes, plus ``filter_examples`` (query param → example value from li
 Output is merged into ``test_data`` passed to ``generate_cases_dcc``.
 If the first ``/subject`` call fails or returns empty ``data``, returns an empty dict and
 few generated cases can be built.
+
+Discovery uses neutral ``contract_*`` keys for entity path values (same keys as Federation contract discovery).
 """
 from __future__ import annotations
 
@@ -23,9 +25,9 @@ def discover_dcc(client: ContractAPIClient) -> dict:
     Paths used: ``GET /subject``, ``GET /sample``, ``GET /file``, ``GET /organization``.
 
     Returns:
-        Keys such as ``organization``, ``namespace``, ``dcc_subject_name``, sample/file
-        triples, ``dcc_organization_name``, fixed count-field strings for ``/by/`` routes,
-        and ``filter_examples`` for list-endpoint query filters.
+        Keys such as ``organization``, ``namespace``, ``contract_subject_name``, sample/file
+        triples, ``contract_organization_name``, fixed count-field strings (``contract_*_count_field``)
+        for ``/by/`` routes, and ``filter_examples`` for list-endpoint query filters.
         Empty dict if discovery cannot read at least one subject row.
     """
     data: dict = {}
@@ -49,10 +51,10 @@ def discover_dcc(client: ContractAPIClient) -> dict:
     org, ns, subj_name = triple
     data["organization"] = org
     data["namespace"] = ns
-    data["dcc_subject_name"] = subj_name
-    data["dcc_subject_count_field"] = "sex"
-    data["dcc_sample_count_field"] = "disease_phase"
-    data["dcc_file_count_field"] = "type"
+    data["contract_subject_name"] = subj_name
+    data["contract_subject_count_field"] = "sex"
+    data["contract_sample_count_field"] = "disease_phase"
+    data["contract_file_count_field"] = "type"
 
     rows_samp: list | None = None
     r_samp = client.get("/sample", list_params)
@@ -64,9 +66,9 @@ def discover_dcc(client: ContractAPIClient) -> dict:
             if isinstance(dr, list) and dr and isinstance(dr[0], dict):
                 t2 = entity_triple(dr[0])
                 if t2:
-                    data["dcc_sample_organization"] = t2[0]
-                    data["dcc_sample_namespace"] = t2[1]
-                    data["dcc_sample_name"] = t2[2]
+                    data["contract_sample_organization"] = t2[0]
+                    data["contract_sample_namespace"] = t2[1]
+                    data["contract_sample_name"] = t2[2]
 
     rows_file: list | None = None
     r_file = client.get("/file", list_params)
@@ -78,9 +80,9 @@ def discover_dcc(client: ContractAPIClient) -> dict:
             if isinstance(dr, list) and dr and isinstance(dr[0], dict):
                 t3 = entity_triple(dr[0])
                 if t3:
-                    data["dcc_file_organization"] = t3[0]
-                    data["dcc_file_namespace"] = t3[1]
-                    data["dcc_file_name"] = t3[2]
+                    data["contract_file_organization"] = t3[0]
+                    data["contract_file_namespace"] = t3[1]
+                    data["contract_file_name"] = t3[2]
 
     r_org = client.get("/organization")
     if r_org.status_code == 200:
@@ -90,9 +92,9 @@ def discover_dcc(client: ContractAPIClient) -> dict:
             if isinstance(o0, dict):
                 ident = o0.get("identifier")
                 name = o0.get("name")
-                data["dcc_organization_name"] = str(ident) if ident else (str(name) if name else None)
-                if not data.get("dcc_organization_name"):
-                    data.pop("dcc_organization_name", None)
+                data["contract_organization_name"] = str(ident) if ident else (str(name) if name else None)
+                if not data.get("contract_organization_name"):
+                    data.pop("contract_organization_name", None)
 
     fe = build_filter_examples_from_list_payloads(rows_sub, rows_samp, rows_file)
     if fe:

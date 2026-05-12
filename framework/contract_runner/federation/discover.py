@@ -3,7 +3,8 @@ Live Federation API discovery for OpenAPI-driven contract tests.
 
 Handles both **DCC-shaped** list payloads (``{ "data": [ ... ] }``) and **Aggregation Layer**
 payloads (top-level JSON **array** of per-node blocks, each optional ``data`` list of harmonized rows).
-Output keys match ``generate_cases_federation`` (same as ``discover_dcc``).
+Output keys match ``generate_cases_federation`` (same as ``discover_dcc``): ``organization``,
+``namespace``, ``contract_*`` entity path fields, and ``filter_examples``.
 """
 from __future__ import annotations
 
@@ -68,10 +69,10 @@ def discover_federation(client: ContractAPIClient) -> dict:
     org, ns, subj_name = triple
     data["organization"] = org
     data["namespace"] = ns
-    data["dcc_subject_name"] = subj_name
-    data["dcc_subject_count_field"] = "sex"
-    data["dcc_sample_count_field"] = "disease_phase"
-    data["dcc_file_count_field"] = "type"
+    data["contract_subject_name"] = subj_name
+    data["contract_subject_count_field"] = "sex"
+    data["contract_sample_count_field"] = "disease_phase"
+    data["contract_file_count_field"] = "type"
 
     rows_samp: list | None = None
     r_samp = client.get("/sample", list_params)
@@ -81,9 +82,9 @@ def discover_federation(client: ContractAPIClient) -> dict:
             rows_samp = merged
             t2 = _first_triple_from_rows(merged)
             if t2:
-                data["dcc_sample_organization"] = t2[0]
-                data["dcc_sample_namespace"] = t2[1]
-                data["dcc_sample_name"] = t2[2]
+                data["contract_sample_organization"] = t2[0]
+                data["contract_sample_namespace"] = t2[1]
+                data["contract_sample_name"] = t2[2]
 
     rows_file: list | None = None
     r_file = client.get("/file", list_params)
@@ -93,9 +94,9 @@ def discover_federation(client: ContractAPIClient) -> dict:
             rows_file = merged_f
             t3 = _first_triple_from_rows(merged_f)
             if t3:
-                data["dcc_file_organization"] = t3[0]
-                data["dcc_file_namespace"] = t3[1]
-                data["dcc_file_name"] = t3[2]
+                data["contract_file_organization"] = t3[0]
+                data["contract_file_namespace"] = t3[1]
+                data["contract_file_name"] = t3[2]
 
     r_org = client.get("/organization")
     if r_org.status_code == 200:
@@ -105,9 +106,9 @@ def discover_federation(client: ContractAPIClient) -> dict:
             if isinstance(o0, dict):
                 ident = o0.get("identifier")
                 name = o0.get("name")
-                data["dcc_organization_name"] = str(ident) if ident else (str(name) if name else None)
-                if not data.get("dcc_organization_name"):
-                    data.pop("dcc_organization_name", None)
+                data["contract_organization_name"] = str(ident) if ident else (str(name) if name else None)
+                if not data.get("contract_organization_name"):
+                    data.pop("contract_organization_name", None)
 
     fe = build_filter_examples_from_list_payloads(rows_sub, rows_samp, rows_file)
     if fe:

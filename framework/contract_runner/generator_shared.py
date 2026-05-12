@@ -1,9 +1,10 @@
 """
-Shared OpenAPI parsing helpers for DCC case generation.
+Shared OpenAPI parsing helpers for **DCC and Federation** contract case generation.
 
 Extracts path/query parameters, response codes, and 200 JSON schema ref names from each
-operation. ``_iter_ops`` drives the main loop in ``dcc.generator``; ``_fill_path_template``
-substitutes path params and normalizes against ``/api/v1``.
+operation. ``_iter_ops`` drives the main loop in ``dcc.generator`` and ``federation.generator``;
+``_fill_path_template`` substitutes path params and normalizes against the spec’s API prefix
+(e.g. ``/api/v1`` for DCC paths, or ``""`` when Federation path keys are already server-relative).
 """
 from __future__ import annotations
 

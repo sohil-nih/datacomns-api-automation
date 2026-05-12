@@ -27,6 +27,8 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+**`jsonschema` and `referencing`:** These are listed in `requirements.txt` for optional future validation or tooling. The OpenAPI **contract runner** does not use them today; it checks HTTP status and uses **heuristic** response-shape logic in `framework/contract_runner/runners/functional.py` (`_check_basic_shape`), not full JSON Schema validation against the spec.
+
 ### 2. Environment (optional overrides)
 
 ```bash
