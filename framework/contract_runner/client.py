@@ -1,5 +1,5 @@
 """
-HTTP layer for DCC OpenAPI contract tests.
+HTTP layer for OpenAPI contract tests (any project in ``config/projects.yaml``).
 
 Uses httpx but exposes the same response shape the ported STS-style runners expect:
 ``get(path, params) -> APIResponse`` with ``status_code``, ``body``, ``json()``, and
@@ -100,7 +100,7 @@ class ContractAPIClient:
         timeout: float = 120.0,
         verify: bool | None = None,
     ) -> ContractAPIClient:
-        """Build a client from ``projects.yaml`` (``dcc`` slug): ``base_url`` + ``api_prefix`` with no trailing slash issues."""
+        """Build a client from any registered project in ``config/projects.yaml``: ``base_url`` + ``api_prefix`` with no trailing slash issues."""
         root = f"{cfg.base_url.rstrip('/')}{(cfg.api_prefix or '').rstrip('/')}"
         return cls(root, headers=cfg.default_headers, timeout=timeout, verify=verify)
 

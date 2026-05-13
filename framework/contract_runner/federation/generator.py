@@ -48,11 +48,11 @@ def _resolve_path_params_federation(path_template: str, path_params: list[dict],
             continue
         if name == "field":
             if "/subject/" in pt and "/by/" in pt:
-                v = test_data.get("dcc_subject_count_field")
+                v = test_data.get("contract_subject_count_field")
             elif "/sample/" in pt and "/by/" in pt:
-                v = test_data.get("dcc_sample_count_field")
+                v = test_data.get("contract_sample_count_field")
             elif "/file/" in pt and "/by/" in pt:
-                v = test_data.get("dcc_file_count_field")
+                v = test_data.get("contract_file_count_field")
             else:
                 return None
             if not v:
@@ -61,9 +61,9 @@ def _resolve_path_params_federation(path_template: str, path_params: list[dict],
             continue
         if name == "organization":
             if "/sample/" in pt and "/by/" not in pt:
-                v = test_data.get("dcc_sample_organization") or test_data.get("organization")
+                v = test_data.get("contract_sample_organization") or test_data.get("organization")
             elif "/file/" in pt and "/by/" not in pt:
-                v = test_data.get("dcc_file_organization") or test_data.get("organization")
+                v = test_data.get("contract_file_organization") or test_data.get("organization")
             else:
                 v = test_data.get("organization")
             if not v:
@@ -72,9 +72,9 @@ def _resolve_path_params_federation(path_template: str, path_params: list[dict],
             continue
         if name == "namespace":
             if "/sample/" in pt and "/by/" not in pt:
-                v = test_data.get("dcc_sample_namespace") or test_data.get("namespace")
+                v = test_data.get("contract_sample_namespace") or test_data.get("namespace")
             elif "/file/" in pt and "/by/" not in pt:
-                v = test_data.get("dcc_file_namespace") or test_data.get("namespace")
+                v = test_data.get("contract_file_namespace") or test_data.get("namespace")
             else:
                 v = test_data.get("namespace")
             if not v:
@@ -83,13 +83,13 @@ def _resolve_path_params_federation(path_template: str, path_params: list[dict],
             continue
         if name == "name":
             if path_template == "/organization/{name}":
-                v = test_data.get("dcc_organization_name")
+                v = test_data.get("contract_organization_name")
             elif "/subject/" in pt and "/by/" not in pt:
-                v = test_data.get("dcc_subject_name")
+                v = test_data.get("contract_subject_name")
             elif "/sample/" in pt and "/by/" not in pt:
-                v = test_data.get("dcc_sample_name")
+                v = test_data.get("contract_sample_name")
             elif "/file/" in pt and "/by/" not in pt:
-                v = test_data.get("dcc_file_name")
+                v = test_data.get("contract_file_name")
             else:
                 return None
             if not v:
