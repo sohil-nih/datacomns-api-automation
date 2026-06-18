@@ -1,7 +1,7 @@
 """
 DCC TC03 — file summary total (GET /file/summary vs Memgraph).
 
-REST: ``/api/v1/file/summary`` → ``counts.total`` (methylation_array_file + sequencing_file).
+REST: ``/api/v1/file/summary`` → ``counts.total`` (sequencing + methylation file summary tuples).
 
 Cypher: ``memgraph_validation/cypher/queries.yaml`` key ``DCC_TC03_verify_file_summary``
 

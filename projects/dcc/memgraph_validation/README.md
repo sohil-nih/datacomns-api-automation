@@ -34,7 +34,7 @@ Memgraph returns one row per distinct `tumor_grade` with `COUNT(DISTINCT sample_
 
 ## Comparator: `dcc_scalar_match`
 
-One Memgraph row with a numeric column (e.g. `total_files`) must equal an integer read from the API JSON via dotted paths (e.g. **`counts.total`** for **GET /api/v1/file/summary** — TC03). TC03 sums **`methylation_array_file`** and **`sequencing_file`** counts using the same study-path logic as **ccdi-dcc-federation-service** `FileRepository._build_count_query`.
+One Memgraph row with a numeric column (e.g. `total_files`) must equal an integer read from the API JSON via dotted paths (e.g. **`counts.total`** for **GET /api/v1/file/summary** — TC03). TC03 sums **`sequencing_file`** and **`methylation_array_file`** tuple counts (`file_id:sample_id:study_id`) with a resolvable study path.
 
 ## Comparator: `graph_study_ids_in_dcc_namespace_api` (TC05)
 

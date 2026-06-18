@@ -35,24 +35,27 @@ DCC_TC02_verify_tumor_grade_count: |
   ORDER BY count DESC, value ASC
 
 DCC_TC03_verify_file_summary: |
-  // Mirrors ccdi-dcc-federation-service FILE_NODE_REGISTRY + FileRepository._build_count_query
-  // (no-filter path): count(DISTINCT file) per node type where sample has a study path, then sum.
+  // Sequencing + methylation file summary (distinct file_id:sample_id:study_id tuples), then sum.
   CALL {
-    MATCH (sf:methylation_array_file)-[:of_methylation_array_file]->(sa:sample)
-    OPTIONAL MATCH (sa)-[:of_sample]->(:participant)-[:of_participant]->(:consent_group)-[:of_consent_group]->(st1:study)
-    WITH sf, sa, collect(DISTINCT st1) AS st1_list
-    OPTIONAL MATCH (sa)-[:of_sample]->(:cell_line)-[:of_cell_line]->(st2:study)
-    WITH sf, st1_list, collect(DISTINCT st2) AS st2_list
-    WHERE size(st1_list) > 0 OR size(st2_list) > 0
-    RETURN count(DISTINCT sf) AS partial
-    UNION ALL
     MATCH (sf:sequencing_file)-[:of_sequencing_file]->(sa:sample)
-    OPTIONAL MATCH (sa)-[:of_sample]->(:participant)-[:of_participant]->(:consent_group)-[:of_consent_group]->(st1:study)
-    WITH sf, sa, collect(DISTINCT st1) AS st1_list
-    OPTIONAL MATCH (sa)-[:of_sample]->(:cell_line)-[:of_cell_line]->(st2:study)
-    WITH sf, st1_list, collect(DISTINCT st2) AS st2_list
-    WHERE size(st1_list) > 0 OR size(st2_list) > 0
-    RETURN count(DISTINCT sf) AS partial
+    WHERE sf.id IS NOT NULL AND toString(sf.id) <> ""
+    OPTIONAL MATCH (sa)-[:of_sample]->(:cell_line)-[:of_cell_line]->(st1:study)
+    OPTIONAL MATCH (sa)-[:of_sample]->(:participant)-[:of_participant]->(:consent_group)-[:of_consent_group]->(st2:study)
+    WITH sf.id AS file_id,
+         sa.sample_id AS sample_id,
+         coalesce(st1, st2).study_id AS study_id
+    WHERE study_id IS NOT NULL
+    RETURN count(DISTINCT file_id + ":" + sample_id + ":" + study_id) AS partial
+    UNION ALL
+    MATCH (maf:methylation_array_file)-[:of_methylation_array_file]->(sa:sample)
+    WHERE maf.id IS NOT NULL AND toString(maf.id) <> ""
+    OPTIONAL MATCH (sa)-[:of_sample]->(:cell_line)-[:of_cell_line]->(st1:study)
+    OPTIONAL MATCH (sa)-[:of_sample]->(:participant)-[:of_participant]->(:consent_group)-[:of_consent_group]->(st2:study)
+    WITH maf.id AS file_id,
+         sa.sample_id AS sample_id,
+         coalesce(st1, st2).study_id AS study_id
+    WHERE study_id IS NOT NULL
+    RETURN count(DISTINCT file_id + ":" + sample_id + ":" + study_id) AS partial
   }
   RETURN sum(partial) AS total_files
 

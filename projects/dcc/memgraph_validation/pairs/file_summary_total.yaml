@@ -1,8 +1,8 @@
-# Memgraph: sum of count(DISTINCT file) for methylation_array_file + sequencing_file with a study path
-# API: GET /api/v1/file/summary → { "counts": { "total": N } } (both file node types)
+# Memgraph: sum of distinct file_id:sample_id:study_id tuples for sequencing_file + methylation_array_file
+# API: GET /api/v1/file/summary → { "counts": { "total": N } }
 id: dcc_file_summary_total
 description: >
-  Compare Memgraph total file count (methylation_array_file + sequencing_file, study-linked)
+  Compare Memgraph file summary total (sequencing + methylation, study-linked tuples)
   to DCC GET /file/summary counts.total.
 tags:
   - memgraph_api
