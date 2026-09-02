@@ -186,10 +186,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Matches any subject where a diagnosis node's `diagnosis_category` matches the value (case-insensitive token after `;` split). Harmonized (CDE 16607972) or unharmonized values. Aligned with CCDI Federation API aggregation subject filtering (v1.3+).",
+              "description": "Matches any subject where a diagnosis node's `diagnosis_category` matches the value (case-insensitive). Harmonized (CDE 16607972) or unharmonized values. Aligned with CCDI Federation API aggregation subject filtering (v1.3+).",
               "title": "Associated Diagnosis Categories"
             },
-            "description": "Matches any subject where a diagnosis node's `diagnosis_category` matches the value (case-insensitive token after `;` split). Harmonized (CDE 16607972) or unharmonized values. Aligned with CCDI Federation API aggregation subject filtering (v1.3+)."
+            "description": "Matches any subject where a diagnosis node's `diagnosis_category` matches the value (case-insensitive). Harmonized (CDE 16607972) or unharmonized values. Aligned with CCDI Federation API aggregation subject filtering (v1.3+)."
           },
           {
             "name": "page",
@@ -205,11 +205,11 @@
                   "type": "null"
                 }
               ],
-              "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided.",
+              "description": "1-based page index. Defaults to 1.",
               "default": 1,
               "title": "Page"
             },
-            "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided."
+            "description": "1-based page index. Defaults to 1."
           },
           {
             "name": "per_page",
@@ -219,17 +219,16 @@
               "anyOf": [
                 {
                   "type": "integer",
-                  "maximum": 1000,
                   "minimum": 1
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000.",
+              "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50.",
               "title": "Per Page"
             },
-            "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000."
+            "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50."
           }
         ],
         "responses": {
@@ -294,6 +293,16 @@
                             "comment": "null"
                           }
                         ],
+                        "associated_diagnosis_categories": [
+                          {
+                            "value": "Brain and Spinal Cord Tumors"
+                          }
+                        ],
+                        "unharmonized": {
+                          "associated_diagnosis_category_1": {
+                            "value": "Gliomas"
+                          }
+                        },
                         "depositions": [
                           {
                             "kind": "dbGaP",
@@ -553,6 +562,11 @@
                       {
                         "value": "Neuroblastoma",
                         "comment": "null"
+                      }
+                    ],
+                    "associated_diagnosis_categories": [
+                      {
+                        "value": "Brain and Spinal Cord Tumors"
                       }
                     ],
                     "depositions": [
@@ -916,6 +930,24 @@
             "description": "Matches any sample where the `diagnosis` field matches the string provided."
           },
           {
+            "name": "diagnosis_category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Matches any sample where a diagnosis node's `diagnosis_category` matches the value (case-insensitive). Harmonized (CDE 16607972) or unharmonized values.",
+              "title": "Diagnosis Category"
+            },
+            "description": "Matches any sample where a diagnosis node's `diagnosis_category` matches the value (case-insensitive). Harmonized (CDE 16607972) or unharmonized values."
+          },
+          {
             "name": "identifiers",
             "in": "query",
             "required": false,
@@ -934,24 +966,6 @@
             "description": "Matches any sample where the `sample_id` field matches the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the sample should be included in the results."
           },
           {
-            "name": "diagnosis_category",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Matches any sample where a diagnosis node's `diagnosis_category` matches the value (case-insensitive token after `;` split). Harmonized (CDE 16607972) or unharmonized values.",
-              "title": "Diagnosis Category"
-            },
-            "description": "Matches any sample where a diagnosis node's `diagnosis_category` matches the value (case-insensitive token after `;` split). Harmonized (CDE 16607972) or unharmonized values."
-          },
-          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -965,11 +979,11 @@
                   "type": "null"
                 }
               ],
-              "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided.",
+              "description": "1-based page index. Defaults to 1.",
               "default": 1,
               "title": "Page"
             },
-            "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided."
+            "description": "1-based page index. Defaults to 1."
           },
           {
             "name": "per_page",
@@ -979,17 +993,16 @@
               "anyOf": [
                 {
                   "type": "integer",
-                  "maximum": 1000,
                   "minimum": 1
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000.",
+              "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50.",
               "title": "Per Page"
             },
-            "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000."
+            "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50."
           }
         ],
         "responses": {
@@ -1030,6 +1043,14 @@
                         "diagnosis": {
                           "value": "Neuroblastoma",
                           "comment": "null"
+                        },
+                        "diagnosis_category": {
+                          "value": "Brain and Spinal Cord Tumors"
+                        },
+                        "unharmonized": {
+                          "dcc_diagnosis_category_1": {
+                            "value": "Gliomas"
+                          }
                         },
                         "age_at_diagnosis": {
                           "value": 10
@@ -1260,6 +1281,9 @@
                       "value": "Neuroblastoma",
                       "comment": "null"
                     },
+                    "diagnosis_category": {
+                      "value": "Brain and Spinal Cord Tumors"
+                    },
                     "age_at_diagnosis": {
                       "value": 10
                     },
@@ -1380,7 +1404,7 @@
           "Experimental"
         ],
         "summary": "Experimental: Filter the samples known by this server by free-text diagnosis search.",
-        "description": "Experimental: Filter the samples known by this server by free-text diagnosis search.\n\n### Diagnosis Filtering\n\nThis endpoint supports the experimental `search` parameter.\nFor this parameter, the sample is included in the results if the value of its\nits `diagnosis` field _contains_ the query string, or if an unharmonized field\ntreated by the implementer as a diagnosis field contains that query string.\nMatches are case-insensitive.\n\n### Pagination\n\nThis endpoint is paginated. Users may override the default pagination\nparameters by providing one or more of the pagination-related query\nparameters below.\n\n### Additional Filtering\n\nAll harmonized (top-level) and unharmonized (nested under the\n`metadata.unharmonized` key) metadata fields are filterable. To achieve\nthis, you can provide the field name as a [`String`]. Filtering follows the\nfollowing rules:\n\n* For single-value metadata field, the sample is included in the results if\nits value _exactly_ matches the query string. Matches are case-sensitive.\n* For multiple-value metadata fields, the sample is included in the results\nif any of its values for the field _exactly_ match the query string (a\nlogical OR [`||`]). Matches are case-sensitive.\n* When the metadata field is `null` (in the case of singular or\nmultiple-valued metadata fields) or empty, the sample is not included.\n* When multiple fields are provided as filters, a logical AND (`&&`) strings\ntogether the predicates. In other words, all filters must match for a\nsample to be returned. Note that this means that servers do not natively\nsupport logical OR (`||`) across multiple fields: that must be done by\ncalling this endpoint with each of your desired queries and performing a\nset union of those samples out of band.\n\n### Ordering\n\nThis endpoint has default ordering requirements—those details are documented\nin the `responses::Samples` schema.\n\nNote: This API is experimental and is subject to change without being considered\nas a breaking change.",
+        "description": "Experimental: Filter the samples known by this server by free-text diagnosis search.\n\n### Diagnosis Filtering\n\nThis endpoint supports the experimental `search` parameter: case-insensitive substring on\n`diagnosis` from diagnosis nodes, or on `diagnosis_comment` when `diagnosis` is\n`see diagnosis_comment`.\n\nThe `diagnosis_category` query parameter matches the **full** `diagnosis_category` string\nwith a case-insensitive **substring**. With `search`, both apply as **AND** on the same\ndiagnosis node.\n\n### Pagination\n\nThis endpoint is paginated. Users may override the default pagination\nparameters by providing one or more of the pagination-related query\nparameters below.\n\n### Additional Filtering\n\nAll harmonized (top-level) and unharmonized (nested under the\n`metadata.unharmonized` key) metadata fields are filterable. To achieve\nthis, you can provide the field name as a [`String`]. Filtering follows the\nfollowing rules:\n\n* For single-value metadata field, the sample is included in the results if\nits value _exactly_ matches the query string. Matches are case-sensitive.\n* For multiple-value metadata fields, the sample is included in the results\nif any of its values for the field _exactly_ match the query string (a\nlogical OR [`||`]). Matches are case-sensitive.\n* When the metadata field is `null` (in the case of singular or\nmultiple-valued metadata fields) or empty, the sample is not included.\n* When multiple fields are provided as filters, a logical AND (`&&`) strings\ntogether the predicates. In other words, all filters must match for a\nsample to be returned. Note that this means that servers do not natively\nsupport logical OR (`||`) across multiple fields: that must be done by\ncalling this endpoint with each of your desired queries and performing a\nset union of those samples out of band.\n\n### Ordering\n\nThis endpoint has default ordering requirements—those details are documented\nin the `responses::Samples` schema.\n\nNote: This API is experimental and is subject to change without being considered\nas a breaking change.",
         "operationId": "sample_diagnosis_search",
         "parameters": [
           {
@@ -1396,10 +1420,28 @@
                   "type": "null"
                 }
               ],
-              "description": "Matches any sample where the `diagnosis` field contains the string provided, ignoring case. When provided, this enables experimental case-insensitive partial matching. When not provided, the endpoint behaves exactly like `/sample` endpoint.",
+              "description": "Case-insensitive substring match on diagnosis text from diagnosis nodes (`diagnosis` property). When `diagnosis` is the sentinel value `see diagnosis_comment`, the search is applied to `diagnosis_comment` instead. May be combined with `diagnosis_category` (AND on the same diagnosis node).",
               "title": "Search"
             },
-            "description": "Matches any sample where the `diagnosis` field contains the string provided, ignoring case. When provided, this enables experimental case-insensitive partial matching. When not provided, the endpoint behaves exactly like `/sample` endpoint."
+            "description": "Case-insensitive substring match on diagnosis text from diagnosis nodes (`diagnosis` property). When `diagnosis` is the sentinel value `see diagnosis_comment`, the search is applied to `diagnosis_comment` instead. May be combined with `diagnosis_category` (AND on the same diagnosis node)."
+          },
+          {
+            "name": "diagnosis_category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Case-insensitive substring on the full `diagnosis_category` on a diagnosis node (harmonized or unharmonized text). With `search`, AND on the same diagnosis node. ",
+              "title": "Diagnosis Category"
+            },
+            "description": "Case-insensitive substring on the full `diagnosis_category` on a diagnosis node (harmonized or unharmonized text). With `search`, AND on the same diagnosis node. "
           },
           {
             "name": "disease_phase",
@@ -1672,24 +1714,6 @@
             "description": "Matches any sample where the `sample_id` field matches the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the sample should be included in the results."
           },
           {
-            "name": "diagnosis_category",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Matches any sample where a diagnosis node's `diagnosis_category` matches the value (case-insensitive token after `;` split). Harmonized (CDE 16607972) or unharmonized values.",
-              "title": "Diagnosis Category"
-            },
-            "description": "Matches any sample where a diagnosis node's `diagnosis_category` matches the value (case-insensitive token after `;` split). Harmonized (CDE 16607972) or unharmonized values."
-          },
-          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -1703,11 +1727,11 @@
                   "type": "null"
                 }
               ],
-              "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided.",
+              "description": "1-based page index. Defaults to 1.",
               "default": 1,
               "title": "Page"
             },
-            "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided."
+            "description": "1-based page index. Defaults to 1."
           },
           {
             "name": "per_page",
@@ -1717,17 +1741,16 @@
               "anyOf": [
                 {
                   "type": "integer",
-                  "maximum": 1000,
                   "minimum": 1
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000.",
+              "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50.",
               "title": "Per Page"
             },
-            "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000."
+            "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50."
           }
         ],
         "responses": {
@@ -1765,9 +1788,19 @@
                         "disease_phase": {
                           "value": "Initial Diagnosis"
                         },
-                        "diagnosis": {
-                          "value": "Neuroblastoma",
-                          "comment": "null"
+                        "diagnosis": [
+                          {
+                            "value": "Neuroblastoma",
+                            "comment": "null"
+                          }
+                        ],
+                        "diagnosis_category": {
+                          "value": "Brain and Spinal Cord Tumors"
+                        },
+                        "unharmonized": {
+                          "dcc_diagnosis_category_1": {
+                            "value": "Gliomas"
+                          }
                         },
                         "age_at_diagnosis": {
                           "value": 10
@@ -2093,11 +2126,11 @@
                   "type": "null"
                 }
               ],
-              "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided.",
+              "description": "1-based page index. Defaults to 1.",
               "default": 1,
               "title": "Page"
             },
-            "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided."
+            "description": "1-based page index. Defaults to 1."
           },
           {
             "name": "per_page",
@@ -2107,17 +2140,16 @@
               "anyOf": [
                 {
                   "type": "integer",
-                  "maximum": 1000,
                   "minimum": 1
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000.",
+              "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50.",
               "title": "Per Page"
             },
-            "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000."
+            "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50."
           }
         ],
         "responses": {
@@ -2182,6 +2214,16 @@
                             "comment": "null"
                           }
                         ],
+                        "associated_diagnosis_categories": [
+                          {
+                            "value": "Brain and Spinal Cord Tumors"
+                          }
+                        ],
+                        "unharmonized": {
+                          "associated_diagnosis_category_1": {
+                            "value": "Gliomas"
+                          }
+                        },
                         "depositions": [
                           {
                             "kind": "dbGaP",
@@ -2243,8 +2285,8 @@
         "tags": [
           "File"
         ],
-        "summary": "Gets the sequencing files known by this server.",
-        "description": "Gets the sequencing files known by this server.\n\n### Pagination\n\nThis endpoint is paginated. Users may override the default pagination\nparameters by providing one or more of the pagination-related query\nparameters below.\n\n### Filtering\n\nAll harmonized (top-level) and unharmonized (nested under the\n`metadata.unharmonized` key) metadata fields are filterable. To achieve\nthis, you can provide the field name as a [`String`]. Filtering follows the\nfollowing rules:\n\n* For single-value metadata field, the sequencing file is included in the results if\nits value _exactly_ matches the query string. Matches are case-sensitive.\n* For multiple-value metadata fields, the sequencing file is included in the results\nif any of its values for the field _exactly_ match the query string (a\nlogical OR (`||`)). Matches are case-sensitive.\n* When the metadata field is `null` (in the case of singular or\nmultiple-valued metadata fields) or empty, the sequencing file is not included.\n* When multiple fields are provided as filters, a logical AND (`&&`) strings\ntogether the predicates. In other words, all filters must match for a\nsequencing file to be returned. Note that this means that servers do not natively\nsupport logical OR (`||`) across multiple fields: that must be done by\ncalling this endpoint with each of your desired queries and performing a\nset union of those files out of band.\n\n### Ordering\n\nThis endpoint has default ordering requirements—those details are documented\nin the `responses::Files` schema.",
+        "summary": "Gets files known by this server (methylation array and sequencing).",
+        "description": "Gets files known by this server.\n\nResults include files from **methylation_array_file** and **sequencing_file** graph node types, returned in a single merged `File` shape.\n\n### Pagination\n\nThis endpoint is paginated. Users may override the default pagination\nparameters by providing one or more of the pagination-related query\nparameters below.\n\n### Filtering\n\nAll harmonized (top-level) and unharmonized (nested under the\n`metadata.unharmonized` key) metadata fields are filterable. To achieve\nthis, you can provide the field name as a [`String`]. Filtering follows the\nfollowing rules:\n\n* For single-value metadata field, the file is included in the results if\nits value _exactly_ matches the query string. Matches are case-sensitive.\n* For multiple-value metadata fields, the file is included in the results\nif any of its values for the field _exactly_ match the query string (a\nlogical OR (`||`)). Matches are case-sensitive.\n* When the metadata field is `null` (in the case of singular or\nmultiple-valued metadata fields) or empty, the file is not included.\n* When multiple fields are provided as filters, a logical AND (`&&`) strings\ntogether the predicates. In other words, all filters must match for a\nfile to be returned. Note that this means that servers do not natively\nsupport logical OR (`||`) across multiple fields: that must be done by\ncalling this endpoint with each of your desired queries and performing a\nset union of those files out of band.\n\n### Ordering\n\nPaginated results are ordered by node type (**methylation_array_file** first, then\n**sequencing_file**), then by file id within each type. Further details are documented\nin the `responses::Files` schema.",
         "operationId": "file_index",
         "parameters": [
           {
@@ -2260,10 +2302,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Matches any sequencing file where the `file_type` field matches the string provided.",
+              "description": "Matches any file (methylation_array_file or sequencing_file) where the `file_type` field matches the string provided.",
               "title": "Type"
             },
-            "description": "Matches any sequencing file where the `file_type` field matches the string provided."
+            "description": "Matches any file (methylation_array_file or sequencing_file) where the `file_type` field matches the string provided."
           },
           {
             "name": "size",
@@ -2278,10 +2320,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Matches any sequencing file where the `file_size` field matches the string provided.",
+              "description": "Matches any file (methylation_array_file or sequencing_file) where the `file_size` field matches the string provided.",
               "title": "Size"
             },
-            "description": "Matches any sequencing file where the `file_size` field matches the string provided."
+            "description": "Matches any file (methylation_array_file or sequencing_file) where the `file_size` field matches the string provided."
           },
           {
             "name": "checksums",
@@ -2296,10 +2338,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Matches any sequencing file where the `md5sum` or `checksum_value` field matches the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the file should be included in the results.",
+              "description": "Matches any file (methylation_array_file or sequencing_file) where the `md5sum` field matches the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the file should be included in the results.",
               "title": "Checksums"
             },
-            "description": "Matches any sequencing file where the `md5sum` or `checksum_value` field matches the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the file should be included in the results."
+            "description": "Matches any file (methylation_array_file or sequencing_file) where the `md5sum` field matches the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the file should be included in the results."
           },
           {
             "name": "description",
@@ -2314,10 +2356,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Matches any sequencing file where the `file_description` field matches the string provided.\n\n**Note:** a file is returned if the value provided is a substring of the description.",
+              "description": "Matches any file (methylation_array_file or sequencing_file) where the `file_description` field matches the string provided.\n\n**Note:** a file is returned if the value provided is a substring of the description.",
               "title": "Description"
             },
-            "description": "Matches any sequencing file where the `file_description` field matches the string provided.\n\n**Note:** a file is returned if the value provided is a substring of the description."
+            "description": "Matches any file (methylation_array_file or sequencing_file) where the `file_description` field matches the string provided.\n\n**Note:** a file is returned if the value provided is a substring of the description."
           },
           {
             "name": "depositions",
@@ -2332,10 +2374,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Matches any sequencing file where any member of the `depositions` fields match the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the file should be included in the results.",
+              "description": "Matches any file (methylation_array_file or sequencing_file) where any member of the `depositions` fields match the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the file should be included in the results.",
               "title": "Depositions"
             },
-            "description": "Matches any sequencing file where any member of the `depositions` fields match the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the file should be included in the results."
+            "description": "Matches any file (methylation_array_file or sequencing_file) where any member of the `depositions` fields match the string provided.\n\n**Note:** a logical OR (`||`) is performed across the values when determining whether the file should be included in the results."
           },
           {
             "name": "metadata.unharmonized.file_name",
@@ -2369,11 +2411,11 @@
                   "type": "null"
                 }
               ],
-              "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided.",
+              "description": "1-based page index. Defaults to 1.",
               "default": 1,
               "title": "Page"
             },
-            "description": "The page to retrieve.\n\nThis is a 1-based index of a page within a page set. The value of page must default to 1 when this parameter is not provided."
+            "description": "1-based page index. Defaults to 1."
           },
           {
             "name": "per_page",
@@ -2383,17 +2425,16 @@
               "anyOf": [
                 {
                   "type": "integer",
-                  "maximum": 1000,
                   "minimum": 1
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000.",
+              "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50.",
               "title": "Per Page"
             },
-            "description": "The number of results per page.\n\nEach server can select its own default value for per_page when this parameter is not provided. \n\nThat said, the convention within the community is to use 50 as a default value if any value is equally reasonable.\n\nThe maximum allowed value is 1000."
+            "description": "Number of results per page. Defaults to 50. Maximum: 500. When any filter query parameter is present and per_page exceeds 500, per_page is silently reduced to 50."
           }
         ],
         "responses": {
@@ -2510,8 +2551,8 @@
         "tags": [
           "File"
         ],
-        "summary": "Groups the sequencing files by the specified metadata field and returns counts.",
-        "description": "Groups the sequencing files by the specified metadata field and returns counts. Only 'type' and 'depositions' are supported.",
+        "summary": "Groups files by metadata field and returns counts (methylation array and sequencing).",
+        "description": "Groups files by the specified metadata field and returns counts. Results include files from **methylation_array_file** and **sequencing_file** graph node types, returned in a single merged `File` shape. Only 'type' and 'depositions' are supported.",
         "operationId": "files_by_count",
         "parameters": [
           {
@@ -2597,8 +2638,8 @@
         "tags": [
           "File"
         ],
-        "summary": "Gets the sequencing file matching the provided identifier (if the file exists).",
-        "description": "Gets the sequencing file matching the provided identifier (if the file exists). Organization must be 'CCDI-DCC'. Namespace is the study_id value from the database. Name is the file id field value from the database.",
+        "summary": "Gets a file by identifier (methylation array or sequencing).",
+        "description": "Gets the file matching the provided identifier (if it exists). Results include files from **methylation_array_file** and **sequencing_file** graph node types, returned in a single merged `File` shape. Organization must be 'CCDI-DCC'. Namespace is the study_id value from the database. Name is the file id field value from the database.",
         "operationId": "file_show",
         "parameters": [
           {
@@ -2757,8 +2798,8 @@
         "tags": [
           "File"
         ],
-        "summary": "Reports summary information for the sequencing files known by this server.",
-        "description": "Reports summary information for the sequencing files known by this server.",
+        "summary": "Reports summary for files known by this server (methylation array and sequencing).",
+        "description": "Reports summary information for files known by this server. Results include files from **methylation_array_file** and **sequencing_file** graph node types, returned in a single merged `File` shape.",
         "operationId": "file_summary",
         "responses": {
           "200": {
@@ -3051,6 +3092,33 @@
         ],
         "title": "AssociatedDiagnosisCategoryField",
         "description": "Associated diagnosis categories field — one harmonized PV value."
+      },
+      "AssociatedDiagnosisField": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value",
+            "description": "Diagnosis ID"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment",
+            "description": "Comment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "AssociatedDiagnosisField",
+        "description": "Associated diagnosis field with detailed structure."
       },
       "CountResponse": {
         "properties": {
@@ -3359,11 +3427,7 @@
       "IdentifierField": {
         "properties": {
           "value": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/IdentifierValue"
-              }
-            ],
+            "$ref": "#/components/schemas/IdentifierValue",
             "description": "Identifier value"
           }
         },
@@ -3377,11 +3441,7 @@
       "IdentifierValue": {
         "properties": {
           "namespace": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/app__models__dto__NamespaceIdentifier__1"
-              }
-            ],
+            "$ref": "#/components/schemas/NamespaceIdentifier",
             "description": "Namespace identifier"
           },
           "name": {
@@ -3438,6 +3498,20 @@
         "title": "IntegerValueField",
         "description": "Integer field with value attribute."
       },
+      "MetadataField": {
+        "properties": {
+          "value": {
+            "title": "Value",
+            "description": "Field value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "MetadataField",
+        "description": "Metadata field with value and ancestors."
+      },
       "MetadataFieldInfo": {
         "properties": {
           "path": {
@@ -3451,16 +3525,19 @@
             "description": "Whether the field is harmonized"
           },
           "wiki_url": {
-            "type": "string",
-            "title": "Wiki Url",
-            "description": "Wiki URL for field documentation"
-          },
-          "standard": {
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/components/schemas/HarmonizedStandard"
+                "type": "string"
+              },
+              {
+                "type": "null"
               }
             ],
+            "title": "Wiki Url",
+            "description": "Wiki URL for field documentation; null when not available"
+          },
+          "standard": {
+            "$ref": "#/components/schemas/HarmonizedStandard",
             "description": "Standard information"
           }
         },
@@ -3468,7 +3545,6 @@
         "required": [
           "path",
           "harmonized",
-          "wiki_url",
           "standard"
         ],
         "title": "MetadataFieldInfo",
@@ -3495,11 +3571,7 @@
       "Namespace": {
         "properties": {
           "id": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/app__models__dto__NamespaceIdentifier"
-              }
-            ],
+            "$ref": "#/components/schemas/NamespaceIdentifier",
             "description": "Namespace identifier"
           },
           "description": {
@@ -3531,6 +3603,27 @@
         ],
         "title": "Namespace",
         "description": "Namespace model."
+      },
+      "NamespaceIdentifier": {
+        "properties": {
+          "organization": {
+            "type": "string",
+            "title": "Organization",
+            "description": "Organization identifier",
+            "default": "CCDI-DCC"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Namespace name (study ID)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "NamespaceIdentifier",
+        "description": "Namespace identifier (organization + study ID).\n\nSingle definition used by Subject/Sample/File identifiers and nested CCDI-DCC\nresponse models. ``organization`` defaults to CCDI-DCC for nested payloads."
       },
       "NamespaceMetadata": {
         "properties": {
@@ -3628,6 +3721,7 @@
           "metadata": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -3648,11 +3742,7 @@
       "Sample": {
         "properties": {
           "id": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SampleIdentifier"
-              }
-            ],
+            "$ref": "#/components/schemas/SampleIdentifier",
             "description": "Sample identifier"
           },
           "subject": {
@@ -3667,11 +3757,7 @@
             "description": "Subject reference"
           },
           "metadata": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SampleMetadata"
-              }
-            ],
+            "$ref": "#/components/schemas/SampleMetadata",
             "description": "Sample metadata"
           }
         },
@@ -3684,14 +3770,41 @@
         "title": "Sample",
         "description": "Sample model with proper structure."
       },
+      "SampleDiagnosisCategoryField": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value",
+            "description": "Diagnosis category value shown on the sample"
+          },
+          "ancestors": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ancestors",
+            "description": "Present only when value was promoted from a field_mappings alias; paths like unharmonized.dcc_diagnosis_category_1. Omitted when unset."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "SampleDiagnosisCategoryField",
+        "description": "Sample-only singular diagnosis_category (response).\n\n``ancestors`` is serialized when set (promoted field_mappings alias only).\nDo not reuse this model on subject or other entities."
+      },
       "SampleIdentifier": {
         "properties": {
           "namespace": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/app__models__dto__NamespaceIdentifier__1"
-              }
-            ],
+            "$ref": "#/components/schemas/NamespaceIdentifier",
             "description": "Namespace identifier"
           },
           "name": {
@@ -3864,12 +3977,39 @@
           "diagnosis": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/DiagnosisField"
+                "items": {
+                  "$ref": "#/components/schemas/DiagnosisField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnosis"
+          },
+          "diagnosis_category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SampleDiagnosisCategoryField"
               },
               {
                 "type": "null"
               }
             ]
+          },
+          "unharmonized": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unharmonized",
+            "description": "Unharmonized metadata fields"
           },
           "identifiers": {
             "anyOf": [
@@ -3884,32 +4024,6 @@
               }
             ],
             "title": "Identifiers"
-          },
-          "diagnosis_category": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/AssociatedDiagnosisCategoryField"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Diagnosis Category"
-          },
-          "unharmonized": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Unharmonized",
-            "description": "Unharmonized metadata fields"
           }
         },
         "type": "object",
@@ -3921,6 +4035,7 @@
           "summary": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -3947,14 +4062,36 @@
         "title": "SamplesResponse",
         "description": "Flexible samples list response that can accommodate any sample structure."
       },
+      "Subject": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SubjectId",
+            "description": "Subject identifier with nested namespace"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Entity kind",
+            "default": "Participant"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/SubjectMetadata",
+            "description": "Subject metadata"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "metadata"
+        ],
+        "title": "Subject",
+        "description": "Subject model with nested CCDI-DCC structure."
+      },
       "SubjectId": {
         "properties": {
           "namespace": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/app__models__dto__NamespaceIdentifier"
-              }
-            ],
+            "$ref": "#/components/schemas/NamespaceIdentifier",
             "description": "Namespace identifier"
           },
           "name": {
@@ -3971,11 +4108,142 @@
         "title": "SubjectId",
         "description": "Subject identifier with nested namespace."
       },
+      "SubjectMetadata": {
+        "properties": {
+          "sex": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetadataField"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "race": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MetadataField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Race"
+          },
+          "ethnicity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetadataField"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "identifiers": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IdentifierField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identifiers"
+          },
+          "associated_diagnoses": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AssociatedDiagnosisField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Associated Diagnoses"
+          },
+          "associated_diagnosis_categories": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AssociatedDiagnosisCategoryField"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Associated Diagnosis Categories"
+          },
+          "unharmonized": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unharmonized",
+            "description": "Unharmonized metadata fields"
+          },
+          "vital_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetadataField"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "age_at_vital_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetadataField"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "depositions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DepositionAccession"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Depositions"
+          }
+        },
+        "type": "object",
+        "title": "SubjectMetadata",
+        "description": "Subject metadata with nested field structure."
+      },
       "SubjectResponse": {
         "properties": {
           "summary": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -3987,7 +4255,7 @@
           },
           "data": {
             "items": {
-
+              "$ref": "#/components/schemas/Subject"
             },
             "type": "array",
             "title": "Data",
@@ -4020,11 +4288,7 @@
       "SummaryResponse": {
         "properties": {
           "counts": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/SummaryCounts"
-              }
-            ],
+            "$ref": "#/components/schemas/SummaryCounts",
             "description": "Summary counts"
           }
         },
@@ -4093,6 +4357,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",
@@ -4117,48 +4388,6 @@
         ],
         "title": "ValueField",
         "description": "Simple field with value attribute."
-      },
-      "app__models__dto__NamespaceIdentifier": {
-        "properties": {
-          "organization": {
-            "type": "string",
-            "title": "Organization",
-            "description": "Organization identifier",
-            "default": "CCDI-DCC"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "Namespace name (study ID)"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "title": "NamespaceIdentifier",
-        "description": "Namespace identifier for nested structure."
-      },
-      "app__models__dto__NamespaceIdentifier__1": {
-        "properties": {
-          "organization": {
-            "type": "string",
-            "title": "Organization",
-            "description": "Organization identifier"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name",
-            "description": "Name"
-          }
-        },
-        "type": "object",
-        "required": [
-          "organization",
-          "name"
-        ],
-        "title": "NamespaceIdentifier",
-        "description": "Namespace identifier model."
       }
     }
   },
@@ -4173,7 +4402,7 @@
     },
     {
       "name": "File",
-      "description": "Files within the CCDI-DCC ecosystem.-- (sequencing files only this release)"
+      "description": "Files within the CCDI-DCC ecosystem (methylation array and sequencing files)."
     },
     {
       "name": "Metadata",
