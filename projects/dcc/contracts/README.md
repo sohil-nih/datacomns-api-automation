@@ -206,6 +206,7 @@ Output artifacts:
 
 - JSON: `reports/dcc/contract/dcc_contract_<timestamp>.json`
 - HTML: `reports/dcc/contract/dcc_contract_<timestamp>.html`
+- Raw request/response log: `logs/dcc-contract_<UTC>.log` (URL, status, body; no headers). Diff a QA file against a prod file. Disable with `DATACOMNS_RUN_LOG=0`.
 
 Pass/fail behavior:
 

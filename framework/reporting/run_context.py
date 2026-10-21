@@ -22,6 +22,11 @@ def set_active_test_nodeid(nodeid: str) -> contextvars.Token[Optional[str]]:
     return _ctx_nodeid.set(nodeid)
 
 
+def current_test_nodeid() -> Optional[str]:
+    """Nodeid of the test currently running, or None outside a test."""
+    return _ctx_nodeid.get()
+
+
 def reset_active_test_nodeid(token: contextvars.Token[Optional[str]]) -> None:
     _ctx_nodeid.reset(token)
 

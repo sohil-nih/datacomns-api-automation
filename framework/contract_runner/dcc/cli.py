@@ -39,6 +39,7 @@ def main_dcc() -> None:
     from framework.contract_runner.reporters.html_report import write_html_report_dcc
     from framework.contract_runner.reporters.report import aggregate_results, write_json_report
     from framework.contract_runner.runners.functional import run_functional_tests_dcc
+    from framework.run_log import log_scope, opened_log_paths
 
     parser = argparse.ArgumentParser(description="DCC API OpenAPI contract test runner")
     parser.add_argument(
@@ -92,7 +93,8 @@ def main_dcc() -> None:
 
     log(f"Client: base_url={client.base_url}")
     log("Running discovery...")
-    test_data = discover_dcc(client)
+    with log_scope("discovery"):
+        test_data = discover_dcc(client)
     discovery_info: dict | None = None
     if test_data:
         discovery_info = {}
@@ -166,6 +168,9 @@ def main_dcc() -> None:
         print(f"Report written: {json_path}, {html_path}", flush=True)
     else:
         log(f"Report written: {json_path}, {html_path}")
+
+    for log_path in opened_log_paths():
+        print(f"Run log: {log_path}", flush=True)
 
     passed = summary.get("passed", 0)
     total = summary.get("total", 0)

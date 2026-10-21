@@ -19,6 +19,7 @@ from urllib.parse import quote
 import httpx
 
 from framework.config.models import ProjectConfig
+from framework.run_log import log_api_exchange, log_lane_for_base_url
 
 
 class APIResponse:
@@ -91,6 +92,7 @@ class ContractAPIClient:
         if verify is None:
             verify = os.getenv("DATACOMNS_SSL_VERIFY", "true").lower() != "false"
         self._verify = verify
+        self._log_lane = log_lane_for_base_url(self.base_url)
 
     @classmethod
     def from_project_config(
@@ -122,7 +124,25 @@ class ContractAPIClient:
                 except json.JSONDecodeError:
                     j = None
                 dur = time.perf_counter() - start
+                log_api_exchange(
+                    lane=self._log_lane,
+                    method="GET",
+                    url=url,
+                    status=r.status_code,
+                    response_body=body,
+                    elapsed_ms=dur * 1000,
+                    base_url=self.base_url,
+                )
                 return APIResponse(r.status_code, body, j, dur)
         except Exception as e:
             dur = time.perf_counter() - start
+            log_api_exchange(
+                lane=self._log_lane,
+                method="GET",
+                url=url,
+                status=0,
+                response_body=str(e),
+                elapsed_ms=dur * 1000,
+                base_url=self.base_url,
+            )
             return APIResponse(0, str(e), None, dur)

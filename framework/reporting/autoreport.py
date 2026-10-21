@@ -511,7 +511,29 @@ pre.cmd{font-size:.82rem;padding:.6rem .85rem;background:var(--bg);border:1px so
 </div></body></html>"""
 
 
+def _announce_run_log(session: pytest.Session) -> None:
+    try:
+        from framework.run_log import opened_log_paths
+    except ImportError:
+        return
+    paths = opened_log_paths()
+    if not paths:
+        return
+    root = Path(session.config.rootpath)
+    tr = session.config.pluginmanager.get_plugin("terminalreporter")
+    for path in paths:
+        try:
+            shown = path.relative_to(root)
+        except ValueError:
+            shown = path
+        if tr:
+            tr.write_sep("=", f"Run log: {shown}")
+        else:
+            print(f"[datacomns] Run log: {shown}", flush=True)
+
+
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    _announce_run_log(session)
     if not _reports_enabled(session.config):
         return
     opt = session.config.option

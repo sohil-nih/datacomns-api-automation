@@ -68,6 +68,8 @@ Implementation lives under [`ui/`](ui/) (Flask app).
 
 Each full run writes a single HTML file: **`reports/report_<YYYYMMDD_HHMMSS>_utc.html`** (UTC timestamp). It includes **database vs API comparison** (**PASSED** / **FAILED**), full **API** and **database** JSON in the table (up to **`DATACOMNS_REPORT_BODY_MAX_CHARS`**, default 50M per side). No `latest.html` / JSON duplicates. Disable with **`--no-datacomns-report`** or **`DATACOMNS_TEST_REPORT=0`**.
 
+The same pytest run also writes **`logs/pytest_<UTC>.log`**: each test name, request URL, status, and response body (Memgraph rows too). Contract and performance runs write **`logs/dcc-contract_<UTC>.log`** or **`logs/federation-contract_<UTC>.log`**. Run once against QA and once against prod, then diff the two files. Disable with **`DATACOMNS_RUN_LOG=0`**. Request headers are not stored.
+
 **Offline / no VPN:** config smoke still runs; live tests **fail** if the host is unreachable. To skip live HTTP:
 
 ```bash
@@ -164,6 +166,7 @@ datacomns-api-automation/
 │       └── tests/
 │           ├── api_smoke/
 │           └── memgraph_api/
+├── logs/                     # per-run request/response logs (gitignored)
 ├── reports/                  # generated (gitignored in practice)
 │   ├── report_*_utc.html     # pytest datacomns HTML report
 │   ├── dcc/contract/         # DCC contract JSON + HTML
@@ -227,6 +230,7 @@ Grouped by project in **[`.env.example`](.env.example)** (Federation block, DCC 
 | DCC | `DATACOMNS_DCC_BASE_URL`, `MEMGRAPH_DCC_URI`, `MEMGRAPH_DCC_USER`, `MEMGRAPH_DCC_PASSWORD`; optional `DCC_CONTRACT_REPORT_DIR`, `DCC_PERF_REPORT_DIR`, `DATACOMNS_SSL_VERIFY` |
 | Global | `DATACOMNS_SKIP_LIVE_TESTS`, `DATACOMNS_SKIP_MEMGRAPH_*`, `DATACOMNS_HTTP_TIMEOUT` |
 | Debug print | **On by default.** Set `DATACOMNS_PRINT_RESPONSES=0` or `off` to disable. Logs **API** bodies and **Memgraph** rows. **`pytest.ini` includes `-s`** so stdout is visible; use **`pytest --capture=sys`** if you need captured output. |
+| Run log | **On by default.** One **`logs/<lane>_<UTC>.log`** per process with request URL, status, and response body (no headers). Set **`DATACOMNS_RUN_LOG=0`** to disable. **`DATACOMNS_RUN_LOG_MAX_CHARS`** caps each body (default 5,000,000). |
 | Test reports | **On by default.** One **`reports/report_*_utc.html`** per run. Set **`DATACOMNS_TEST_REPORT=0`** or **`pytest --no-datacomns-report`** to disable. |
 
 Details: **[docs/MEMGRAPH_ENV.md](docs/MEMGRAPH_ENV.md)** · AI: `DATACOMNS_AI_OPENAPI_MAX_CHARS`

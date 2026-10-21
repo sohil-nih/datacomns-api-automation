@@ -20,7 +20,7 @@ bash scripts/run_federation_contract_suite.sh
 Options mirror DCC (`--tags`, `--strict-filter-data`, `--spec`, `--report`, `--base-url`).  
 `--no-negative` skips bad-query (`page=0`, `per_page=0`) and invalid-path GETs; by default those cases still run and **expect HTTP 200** (Aggregation Layer returns 200 and may put node issues in the body; 4xx/5xx including **504** still fail the run).
 
-Reports default to **`reports/federation/contract/`** (override with `FEDERATION_CONTRACT_REPORT_DIR`).
+Reports default to **`reports/federation/contract/`** (override with `FEDERATION_CONTRACT_REPORT_DIR`). Each run also writes **`logs/federation-contract_<UTC>.log`** with the GET URL, status, and response body (no headers). Set **`DATACOMNS_RUN_LOG=0`** to skip it.
 
 **Aggregation Layer:** every generated case expects **200** only — including “negative” traffic (bad query / invalid path segments). **`FEDERATION_AL_EXPECTED_SOURCES`**: comma-separated `source` labels; **defaults in code** to the seven QA nodes when the variable is unset or blank. Set to **`none`** or **`-`** to disable roster checks. When the list is non-empty and the response body is a **non-empty JSON array** of objects each with a string **`source`**, every listed name must appear at least once (per-node `errors` or empty `data` are fine). Other shapes (e.g. `/info`, `{ data, metadata }`) skip the roster check.
 

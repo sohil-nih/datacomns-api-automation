@@ -78,7 +78,7 @@ The package **`framework.contract_runner.dcc.cli`** drives GET requests from **`
 - **Performance (positive cases only):** `bash scripts/run_dcc_perf.sh`
 - **Browser UI:** `python launcher.py` (sets `DATACOMNS_DCC_BASE_URL` per selected environment)
 
-Outputs: **`reports/dcc/contract/`** and **`reports/dcc/perf/`** by default — not the same files as pytest-html auto-reports.
+Outputs: **`reports/dcc/contract/`** and **`reports/dcc/perf/`** by default — not the same files as pytest-html auto-reports. Each run also writes **`logs/dcc-contract_<UTC>.log`** (or **`logs/federation-contract_<UTC>.log`**) with the raw GET URL, status, and response body so a QA run and a prod run can be diffed. Set **`DATACOMNS_RUN_LOG=0`** to skip that file.
 
 ## Memgraph vs API pairs (DCC)
 
@@ -94,6 +94,8 @@ Read **[AI_INTEGRATION.md](AI_INTEGRATION.md)**.
 ## Print API / Memgraph results
 
 Printing is **on by default**. Set **`DATACOMNS_PRINT_RESPONSES=0`** in `.env` to turn off `[DATACOMNS_PRINT]` logs. **`pytest.ini` includes `-s`** so that output appears in the terminal; use **`pytest --capture=sys`** when you want normal capture.
+
+A text log is written as well: **`logs/pytest_<UTC>.log`** for pytest, and **`logs/<lane>_<UTC>.log`** for contract and performance runs. It keeps the request URL, status, elapsed time, and response body (headers omitted). Set **`DATACOMNS_RUN_LOG=0`** to turn the file off without turning off terminal printing.
 
 ## Who to ask
 

@@ -15,6 +15,7 @@ from typing import Callable
 
 from framework.contract_runner.client import APIResponse, ContractAPIClient, _build_query_string
 from framework.contract_runner.filter_extract import filter_candidates_from_row, filter_match_mode
+from framework.run_log import log_scope
 
 @dataclass(frozen=True)
 class PaginationPairOutcome:
@@ -127,6 +128,15 @@ def _path_with_query(path: str, params: dict | None) -> str:
     return path + _build_query_string(params)
 
 
+def _case_label(case: dict) -> str:
+    """Operation id and summary for the run log, so a QA/prod diff shows which case ran."""
+    operation_id = case.get("operation_id") or ""
+    summary = case.get("summary") or ""
+    if operation_id and summary:
+        return f"{operation_id} | {summary}"
+    return operation_id or summary or (case.get("path") or "")
+
+
 def run_functional_tests(
     client: ContractAPIClient,
     cases: list[dict],
@@ -150,7 +160,8 @@ def run_functional_tests(
         summary = case.get("summary", "")
 
         if case.get("pagination_pair_assert"):
-            pair_out = _pagination_pair_check(client, case)
+            with log_scope(_case_label(case)):
+                pair_out = _pagination_pair_check(client, case)
             params_a = case.get("pagination_pair_params_a")
             params_b = case.get("pagination_pair_params_b")
             path_a = _path_with_query(path, params_a) if params_a is not None else _path_with_query(path, params)
@@ -196,7 +207,8 @@ def run_functional_tests(
                 on_case_done(result)
             continue
 
-        response: APIResponse = client.get(path, params)
+        with log_scope(_case_label(case)):
+            response: APIResponse = client.get(path, params)
 
         passed = response.status_code == expected_status
         error = None

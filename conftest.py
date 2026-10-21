@@ -37,6 +37,12 @@ def _datacomns_report_bind_test_nodeid(request):
         yield
         return
     tok = set_active_test_nodeid(request.node.nodeid)
+    try:
+        from framework.run_log import note_pytest_test
+
+        note_pytest_test(request.node.nodeid)
+    except ImportError:
+        pass
     yield
     reset_active_test_nodeid(tok)
 

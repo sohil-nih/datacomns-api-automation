@@ -35,6 +35,7 @@ def main_dcc_perf() -> None:
     from framework.contract_runner.loader import get_paths, load_spec
     from framework.contract_runner.reporters.perf_report import write_perf_html_report, write_perf_json_report
     from framework.contract_runner.runners.performance import run_perf_tests
+    from framework.run_log import log_scope, opened_log_paths
 
     parser = argparse.ArgumentParser(description="DCC API performance runner (OpenAPI cases)")
     parser.add_argument("--spec", default=None, help="OpenAPI file (default: from project dcc config)")
@@ -80,7 +81,8 @@ def main_dcc_perf() -> None:
     print(f"Spec loaded: {len(get_paths(spec))} paths.", flush=True)
 
     print("Running discovery...", flush=True)
-    test_data = discover_dcc(client)
+    with log_scope("discovery"):
+        test_data = discover_dcc(client)
     if not test_data:
         print(
             "Discovery returned no data. Check that the DCC API is reachable and /subject returns rows.",
@@ -156,6 +158,8 @@ def main_dcc_perf() -> None:
         flush=True,
     )
     print(f"  Reports        : {html_path}, {json_path}", flush=True)
+    for log_path in opened_log_paths():
+        print(f"  Run log        : {log_path}", flush=True)
 
     if args.fail_on_error_rate is not None and stats.error_rate_pct > args.fail_on_error_rate:
         print(

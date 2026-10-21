@@ -45,6 +45,7 @@ def main_federation() -> None:
         federation_al_expected_sources,
         run_functional_tests_dcc,
     )
+    from framework.run_log import log_scope, opened_log_paths
 
     parser = argparse.ArgumentParser(description="Federation API OpenAPI contract test runner")
     parser.add_argument(
@@ -111,7 +112,8 @@ def main_federation() -> None:
     else:
         log("AL source roster: disabled (FEDERATION_AL_EXPECTED_SOURCES is none or -).")
     log("Running discovery...")
-    test_data = discover_federation(client)
+    with log_scope("discovery"):
+        test_data = discover_federation(client)
     discovery_info: dict | None = None
     if test_data:
         discovery_info = {}
@@ -193,6 +195,9 @@ def main_federation() -> None:
         print(f"Report written: {json_path}, {html_path}", flush=True)
     else:
         log(f"Report written: {json_path}, {html_path}")
+
+    for log_path in opened_log_paths():
+        print(f"Run log: {log_path}", flush=True)
 
     passed = summary.get("passed", 0)
     total = summary.get("total", 0)

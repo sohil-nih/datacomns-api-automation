@@ -12,3 +12,6 @@ htmlcov/
 # Auto-generated pytest reports (latest.* overwritten each run)
 reports/*
 !reports/.gitkeep
+
+# Per-run request/response logs (pytest and contract/perf)
+logs/

@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from framework.contract_runner.client import ContractAPIClient, _build_query_string
+from framework.run_log import log_scope
 
 
 @dataclass
@@ -154,7 +155,10 @@ def run_perf_tests(
         params = case.get("params")
         path_display = path + _build_query_string(params)
         op_id = case.get("operation_id", "")
-        response = client.get(path, params)
+        summary = case.get("summary") or ""
+        label = f"{op_id} | {summary}" if op_id and summary else (op_id or summary or path)
+        with log_scope(f"{label} | iteration={iteration}"):
+            response = client.get(path, params)
         return PerfResult(
             operation_id=op_id,
             path=path_display,
